@@ -78,7 +78,7 @@ fun MainScreen(
 
     val handleBack = {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPressBack < 1000 * 3) {
+        if (currentTime - lastPressBack < 500 * 3) {
             logger.fInfo { "Exiting bug video" }
             (context as Activity).finish()
         } else {
@@ -151,9 +151,9 @@ fun MainScreen(
                 }
             ) { screen ->
                 when (screen) {
-                    DrawerItem.Home -> HomeContent(navFocusRequester = mainFocusRequester)
-                    DrawerItem.UGC -> UgcContent(navFocusRequester = ugcFocusRequester)
-                    DrawerItem.PGC -> PgcContent(navFocusRequester = pgcFocusRequester)
+                    DrawerItem.Home -> HomeContent(contentFocusRequester = mainFocusRequester)
+                    DrawerItem.UGC -> UgcContent(contentFocusRequester = ugcFocusRequester)
+                    DrawerItem.PGC -> PgcContent(contentFocusRequester = pgcFocusRequester)
                     DrawerItem.Search -> SearchInputScreen(defaultFocusRequester = searchFocusRequester)
                     else -> {}
                 }

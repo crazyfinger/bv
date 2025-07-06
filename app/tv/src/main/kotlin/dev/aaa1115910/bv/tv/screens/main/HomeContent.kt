@@ -43,7 +43,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeContent(
     modifier: Modifier = Modifier,
-    navFocusRequester: FocusRequester,
+    contentFocusRequester: FocusRequester,
     recommendViewModel: RecommendViewModel = koinViewModel(),
     popularViewModel: PopularViewModel = koinViewModel(),
     dynamicViewModel: DynamicViewModel = koinViewModel(),
@@ -58,17 +58,17 @@ fun HomeContent(
 
 //    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
     var focusOnContent by remember { mutableStateOf(false) }
-    var hasFocus by remember { mutableStateOf(false) }
-    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.Home]
-    var selectedTab by remember(initialSelectedTabIndex) {
+    var topNavFocus by remember { mutableStateOf(false) }
+    val initialSelectedTab = currentSelectedTabs[DrawerItem.Home]
+    var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
-            initialSelectedTabIndex?.let {
-                HomeTopNavItem.entries.getOrNull(it)
-            } ?: HomeTopNavItem.entries[0]
+            (initialSelectedTab as? HomeTopNavItem)
+                ?.let { HomeTopNavItem.entries.getOrNull(it.ordinal) }
+                ?: HomeTopNavItem.entries[0]
         )
     }
     LaunchedEffect(selectedTab) {
-        currentSelectedTabs[DrawerItem.Home] = selectedTab.ordinal
+        currentSelectedTabs[DrawerItem.Home] = selectedTab
     }
     val currentListOnTop by remember {
         derivedStateOf {
@@ -111,14 +111,14 @@ fun HomeContent(
         }
     }
 
-    LaunchedEffect(hasFocus) {
-        if (hasFocus) {
-            navFocusRequester.requestFocus()
-        }
-    }
+    val navFocusRequester = remember { FocusRequester() }
 
-    BackHandler(focusOnContent) {
-        logger.fInfo { "onFocusBackToNav" }
+    BackHandler(focusOnContent || topNavFocus) {
+        logger.fInfo { "onFocusBackToNav topNavFocus $topNavFocus" }
+        if (topNavFocus) {
+           drawerItemFocusRequesters[DrawerItem.Home]?.requestFocus(scope)
+           return@BackHandler
+        }
         navFocusRequester.requestFocus(scope)
         // scroll to top
         scope.launch(Dispatchers.Main) {
@@ -131,13 +131,13 @@ fun HomeContent(
     }
 
     Scaffold(
-        modifier = Modifier
-            .onFocusChanged { hasFocus = it.hasFocus },
+        modifier = modifier,
         topBar = {
             TopNav(
                 modifier = Modifier
                     .focusRequester(navFocusRequester)
-                    .padding(end = 80.dp),
+                    .padding(end = 80.dp)
+                    .onFocusChanged { topNavFocus = it.hasFocus },
                 items = HomeTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,
                 initialSelectedItem = selectedTab,
@@ -176,6 +176,10 @@ fun HomeContent(
                             scope.launch(Dispatchers.IO) { dynamicViewModel.loadMoreVideo() }
                         }
                     }
+                },
+                onLeftKeyEvent = {
+                    // 顶部栏最左侧按左键时，跳转到左侧导航栏
+                    drawerItemFocusRequesters[DrawerItem.Home]?.requestFocus(scope)
                 }
             )
         }
@@ -183,6 +187,7 @@ fun HomeContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
             AnimatedContent(

@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun UgcContent(
     modifier: Modifier = Modifier,
-    navFocusRequester: FocusRequester,
+    contentFocusRequester: FocusRequester,
     dougaState: UgcScaffoldState = rememberUgcScaffoldState(ugcType = UgcTypeV2.Douga),
     gameState: UgcScaffoldState = rememberUgcScaffoldState(ugcType = UgcTypeV2.Game),
     kichikuState: UgcScaffoldState = rememberUgcScaffoldState(ugcType = UgcTypeV2.Kichiku),
@@ -103,25 +103,27 @@ fun UgcContent(
 
 //    var selectedTab by remember { mutableStateOf(UgcTopNavItem.Douga) }
     var focusOnContent by remember { mutableStateOf(false) }
-
-    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.UGC]
-    var selectedTab by remember(initialSelectedTabIndex) {
+    var topNavHasFocus by remember { mutableStateOf(false) }
+    val initialSelectedTab = currentSelectedTabs[DrawerItem.UGC]
+    var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
-            initialSelectedTabIndex?.let {
-                UgcTopNavItem.entries.getOrNull(it)
-            } ?: UgcTopNavItem.entries[0]
+            (initialSelectedTab as? UgcTopNavItem)
+                ?.let {
+                    UgcTopNavItem.entries.getOrNull(it.ordinal)
+                } ?: UgcTopNavItem.entries[0]
         )
     }
     LaunchedEffect(selectedTab) {
-        currentSelectedTabs[DrawerItem.UGC] = selectedTab.ordinal
-    }
-    //启动时刷新数据
-    LaunchedEffect(Unit) {
-
+        currentSelectedTabs[DrawerItem.UGC] = selectedTab
     }
 
-    BackHandler(focusOnContent) {
-        logger.fInfo { "onFocusBackToNav" }
+    val navFocusRequester = remember { FocusRequester() }
+    BackHandler(focusOnContent || topNavHasFocus) {
+        logger.fInfo { "onFocusBackToNav $topNavHasFocus" }
+        if (topNavHasFocus) {
+            drawerItemFocusRequesters[DrawerItem.UGC]?.requestFocus(scope)
+            return@BackHandler
+        }
         navFocusRequester.requestFocus(scope)
         // scroll to top
         scope.launch(Dispatchers.Main) {
@@ -169,7 +171,8 @@ fun UgcContent(
         topBar = {
             TopNav(
                 modifier = Modifier
-                    .focusRequester(navFocusRequester),
+                    .focusRequester(navFocusRequester)
+                    .onFocusChanged { topNavHasFocus = it.hasFocus },
                 items = UgcTopNavItem.entries,
                 isLargePadding = !focusOnContent,
                 initialSelectedItem = selectedTab,
@@ -210,6 +213,10 @@ fun UgcContent(
                         UgcTopNavItem.LifeExperience -> lifeExperienceState.reloadAll()
                         UgcTopNavItem.Mysticism -> mysticismState.reloadAll()
                     }
+                },
+                onLeftKeyEvent = {
+                    // 顶部栏最左侧按左键时，跳转到左侧导航栏
+                    drawerItemFocusRequesters[DrawerItem.UGC]?.requestFocus(scope)
                 }
             )
         }
@@ -217,6 +224,7 @@ fun UgcContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
             AnimatedContent(

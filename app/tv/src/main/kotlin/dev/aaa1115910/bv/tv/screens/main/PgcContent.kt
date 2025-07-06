@@ -48,7 +48,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun PgcContent(
     modifier: Modifier = Modifier,
-    navFocusRequester: FocusRequester,
+    contentFocusRequester: FocusRequester,
     pgcAnimeViewModel: PgcAnimeViewModel = koinViewModel(),
     pgcGuoChuangViewModel: PgcGuoChuangViewModel = koinViewModel(),
     pgcMovieViewModel: PgcMovieViewModel = koinViewModel(),
@@ -68,16 +68,18 @@ fun PgcContent(
 
 //    var selectedTab by remember { mutableStateOf(PgcTopNavItem.Anime) }
     var focusOnContent by remember { mutableStateOf(false) }
-    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.PGC]
-    var selectedTab by remember(initialSelectedTabIndex) {
+    var topNavHasFocus by remember { mutableStateOf(false) }
+    val initialSelectedTab = currentSelectedTabs[DrawerItem.PGC]
+    var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
-            initialSelectedTabIndex?.let {
-                PgcTopNavItem.entries.getOrNull(it)
-            } ?: PgcTopNavItem.entries[0]
+            (initialSelectedTab as? PgcTopNavItem)
+                ?.let {
+                    PgcTopNavItem.entries.getOrNull(it.ordinal)
+                } ?: PgcTopNavItem.entries[0]
         )
     }
     LaunchedEffect(selectedTab) {
-        currentSelectedTabs[DrawerItem.PGC] = selectedTab.ordinal
+        currentSelectedTabs[DrawerItem.PGC] = selectedTab
     }
     val currentListOnTop by remember {
         derivedStateOf {
@@ -96,13 +98,13 @@ fun PgcContent(
         }
     }
 
-    //启动时刷新数据
-    LaunchedEffect(Unit) {
-
-    }
-
-    BackHandler(focusOnContent) {
+    val navFocusRequester = remember { FocusRequester() }
+    BackHandler(focusOnContent || topNavHasFocus) {
         logger.fInfo { "onFocusBackToNav" }
+        if (topNavHasFocus) {
+            drawerItemFocusRequesters[DrawerItem.PGC]?.requestFocus(scope)
+            return@BackHandler
+        }
         navFocusRequester.requestFocus(scope)
         // scroll to top
         scope.launch(Dispatchers.Main) {
@@ -118,12 +120,13 @@ fun PgcContent(
     }
 
     Scaffold(
-        modifier = Modifier,
+        modifier = modifier,
         topBar = {
             TopNav(
                 modifier = Modifier
                     .focusRequester(navFocusRequester)
-                    .padding(end = 80.dp),
+                    .padding(end = 80.dp)
+                    .onFocusChanged { topNavHasFocus = it.hasFocus },
                 items = PgcTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,
                 initialSelectedItem = selectedTab,
@@ -139,6 +142,10 @@ fun PgcContent(
                         PgcTopNavItem.Tv -> pgcTvViewModel.reloadAll()
                         PgcTopNavItem.Variety -> pgcVarietyViewModel.reloadAll()
                     }
+                },
+                onLeftKeyEvent = {
+                    // 顶部栏最左侧按左键时，跳转到左侧导航栏
+                    drawerItemFocusRequesters[DrawerItem.PGC]?.requestFocus(scope)
                 }
             )
         }
@@ -146,6 +153,7 @@ fun PgcContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
             AnimatedContent(

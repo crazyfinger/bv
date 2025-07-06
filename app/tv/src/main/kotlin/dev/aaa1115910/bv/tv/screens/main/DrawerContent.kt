@@ -44,14 +44,22 @@ import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import coil.compose.AsyncImage
+import dev.aaa1115910.bv.tv.component.TopNavItem
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.isDpadRight
 import dev.aaa1115910.bv.util.isKeyDown
 
 //用于记住每个内容页当前选中的 Tab
-val currentSelectedTabs = mutableStateMapOf<DrawerItem,Int>()
+val currentSelectedTabs = mutableStateMapOf<DrawerItem,TopNavItem>()
 
+// 创建全局的 FocusRequester 映射表，方便外部使用
+val drawerItemFocusRequesters = mutableMapOf<DrawerItem, FocusRequester>().apply {
+    DrawerItem.entries.filter { it != DrawerItem.User && it != DrawerItem.Settings }
+        .forEach { item ->
+            this[item] = FocusRequester()
+        }
+}
 @Composable
 fun NavigationDrawerScope.DrawerContent(
     modifier: Modifier = Modifier,
@@ -145,6 +153,7 @@ fun NavigationDrawerScope.DrawerContent(
                 item {
                     NavigationDrawerItem(
                         modifier = Modifier
+                            .focusRequester(drawerItemFocusRequesters[item]!!)
                             .onFocusChanged { if (it.hasFocus) selectedItem = item }
                             .ifElse(
                                 item == DrawerItem.Home,
@@ -187,8 +196,8 @@ enum class DrawerItem(
     User(displayName = "点击登录", displayIcon = Icons.Default.AccountCircle),
     Search(displayName = "搜索", displayIcon = Icons.Default.Search),
     Home(displayName = "首页", displayIcon = Icons.Default.Home),
-    UGC(displayName = "UGC", displayIcon = Icons.Default.OndemandVideo),
-    PGC(displayName = "PGC", displayIcon = Icons.Default.Movie),
+    UGC(displayName = "分区", displayIcon = Icons.Default.OndemandVideo),
+    PGC(displayName = "影视", displayIcon = Icons.Default.Movie),
     Settings(displayName = "设置", displayIcon = Icons.Default.Settings), ;
 }
 
