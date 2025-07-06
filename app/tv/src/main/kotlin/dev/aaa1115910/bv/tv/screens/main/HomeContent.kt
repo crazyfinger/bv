@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.aaa1115910.bv.tv.component.HomeTopNavItem
 import dev.aaa1115910.bv.tv.component.TopNav
@@ -57,9 +56,20 @@ fun HomeContent(
     val popularState = rememberLazyListState()
     val dynamicState = rememberLazyListState()
 
-    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
+//    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
     var focusOnContent by remember { mutableStateOf(false) }
     var hasFocus by remember { mutableStateOf(false) }
+    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.Home]
+    var selectedTab by remember(initialSelectedTabIndex) {
+        mutableStateOf(
+            initialSelectedTabIndex?.let {
+                HomeTopNavItem.entries.getOrNull(it)
+            } ?: HomeTopNavItem.entries[0]
+        )
+    }
+    LaunchedEffect(selectedTab) {
+        currentSelectedTabs[DrawerItem.Home] = selectedTab.ordinal
+    }
     val currentListOnTop by remember {
         derivedStateOf {
             with(
@@ -130,6 +140,7 @@ fun HomeContent(
                     .padding(end = 80.dp),
                 items = HomeTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,
+                initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
                     selectedTab = nav as HomeTopNavItem
                     when (nav) {

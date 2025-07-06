@@ -101,9 +101,20 @@ fun UgcContent(
     val scope = rememberCoroutineScope()
     val logger = KotlinLogging.logger("UgcContent")
 
-    var selectedTab by remember { mutableStateOf(UgcTopNavItem.Douga) }
+//    var selectedTab by remember { mutableStateOf(UgcTopNavItem.Douga) }
     var focusOnContent by remember { mutableStateOf(false) }
 
+    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.UGC]
+    var selectedTab by remember(initialSelectedTabIndex) {
+        mutableStateOf(
+            initialSelectedTabIndex?.let {
+                UgcTopNavItem.entries.getOrNull(it)
+            } ?: UgcTopNavItem.entries[0]
+        )
+    }
+    LaunchedEffect(selectedTab) {
+        currentSelectedTabs[DrawerItem.UGC] = selectedTab.ordinal
+    }
     //启动时刷新数据
     LaunchedEffect(Unit) {
 
@@ -161,6 +172,7 @@ fun UgcContent(
                     .focusRequester(navFocusRequester),
                 items = UgcTopNavItem.entries,
                 isLargePadding = !focusOnContent,
+                initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
                     selectedTab = nav as UgcTopNavItem
                 },

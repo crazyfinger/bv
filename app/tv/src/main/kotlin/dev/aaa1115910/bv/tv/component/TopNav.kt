@@ -38,13 +38,23 @@ fun TopNav(
     modifier: Modifier = Modifier,
     items: List<TopNavItem>,
     isLargePadding: Boolean,
+    initialSelectedItem: TopNavItem? = null,
     onSelectedChanged: (TopNavItem) -> Unit = {},
     onClick: (TopNavItem) -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
 
-    var selectedNav by remember { mutableStateOf(items.first()) }
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedNav by remember(initialSelectedItem) {
+        mutableStateOf(initialSelectedItem ?: items.first())
+    }
+    var selectedTabIndex by remember(initialSelectedItem) {
+        mutableIntStateOf(
+            if (initialSelectedItem != null) {
+                val index = items.indexOf(initialSelectedItem)
+                if (index >= 0) index else 0
+            } else 0
+        )
+    }
     val verticalPadding by animateDpAsState(
         targetValue = if (isLargePadding) 24.dp else 12.dp,
         label = "top nav vertical padding"
@@ -121,17 +131,19 @@ enum class HomeTopNavItem(private val displayName: String) : TopNavItem {
 }
 
 enum class UgcTopNavItem(private val ugcType: UgcTypeV2) : TopNavItem {
+    Cinephile(UgcTypeV2.Cinephile),
+    Tech(UgcTypeV2.Tech),
+    Food(UgcTypeV2.Food),
+    Knowledge(UgcTypeV2.Knowledge),
+    Music(UgcTypeV2.Music),
+    Information(UgcTypeV2.Information),
+    Dance(UgcTypeV2.Dance),
+    Ent(UgcTypeV2.Ent),
+    Outdoors(UgcTypeV2.Outdoors),
+    Travel(UgcTypeV2.Travel),
     Douga(UgcTypeV2.Douga),
     Game(UgcTypeV2.Game),
     Kichiku(UgcTypeV2.Kichiku),
-    Music(UgcTypeV2.Music),
-    Dance(UgcTypeV2.Dance),
-    Cinephile(UgcTypeV2.Cinephile),
-    Ent(UgcTypeV2.Ent),
-    Knowledge(UgcTypeV2.Knowledge),
-    Tech(UgcTypeV2.Tech),
-    Information(UgcTypeV2.Information),
-    Food(UgcTypeV2.Food),
     ShortPlay(UgcTypeV2.Shortplay),
     Car(UgcTypeV2.Car),
     Fashion(UgcTypeV2.Fashion),
@@ -141,10 +153,8 @@ enum class UgcTopNavItem(private val ugcType: UgcTypeV2) : TopNavItem {
     Painting(UgcTypeV2.Painting),
     Ai(UgcTypeV2.Ai),
     Home(UgcTypeV2.Home),
-    Outdoors(UgcTypeV2.Outdoors),
     Gym(UgcTypeV2.Gym),
     Handmake(UgcTypeV2.Handmake),
-    Travel(UgcTypeV2.Travel),
     Rural(UgcTypeV2.Rural),
     Parenting(UgcTypeV2.Parenting),
     Health(UgcTypeV2.Health),
@@ -159,11 +169,11 @@ enum class UgcTopNavItem(private val ugcType: UgcTypeV2) : TopNavItem {
 }
 
 enum class PgcTopNavItem(private val pgcType: PgcType) : TopNavItem {
-    Anime(PgcType.Anime),
-    GuoChuang(PgcType.GuoChuang),
     Movie(PgcType.Movie),
-    Documentary(PgcType.Documentary),
     Tv(PgcType.Tv),
+    GuoChuang(PgcType.GuoChuang),
+    Anime(PgcType.Anime),
+    Documentary(PgcType.Documentary),
     Variety(PgcType.Variety);
 
     override fun getDisplayName(context: Context): String {

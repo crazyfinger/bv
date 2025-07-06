@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,6 +48,9 @@ import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.isDpadRight
 import dev.aaa1115910.bv.util.isKeyDown
+
+//用于记住每个内容页当前选中的 Tab
+val currentSelectedTabs = mutableStateMapOf<DrawerItem,Int>()
 
 @Composable
 fun NavigationDrawerScope.DrawerContent(

@@ -66,8 +66,19 @@ fun PgcContent(
     val tvState = rememberLazyListState()
     val varietyState = rememberLazyListState()
 
-    var selectedTab by remember { mutableStateOf(PgcTopNavItem.Anime) }
+//    var selectedTab by remember { mutableStateOf(PgcTopNavItem.Anime) }
     var focusOnContent by remember { mutableStateOf(false) }
+    val initialSelectedTabIndex = currentSelectedTabs[DrawerItem.PGC]
+    var selectedTab by remember(initialSelectedTabIndex) {
+        mutableStateOf(
+            initialSelectedTabIndex?.let {
+                PgcTopNavItem.entries.getOrNull(it)
+            } ?: PgcTopNavItem.entries[0]
+        )
+    }
+    LaunchedEffect(selectedTab) {
+        currentSelectedTabs[DrawerItem.PGC] = selectedTab.ordinal
+    }
     val currentListOnTop by remember {
         derivedStateOf {
             with(
@@ -115,6 +126,7 @@ fun PgcContent(
                     .padding(end = 80.dp),
                 items = PgcTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,
+                initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
                     selectedTab = nav as PgcTopNavItem
                 },
