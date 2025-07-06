@@ -18,10 +18,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import dev.aaa1115910.biliapi.entity.ugc.UgcItem
 import dev.aaa1115910.bv.tv.component.LoadingTip
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
+import dev.aaa1115910.bv.tv.R
 import dev.aaa1115910.bv.tv.activities.video.VideoInfoActivity
 import dev.aaa1115910.bv.tv.component.videocard.SmallVideoCard
 import dev.aaa1115910.bv.tv.screens.main.ugc.gridItems
@@ -57,6 +59,8 @@ fun PopularScreen(
         }
     }
 
+    val padding = dimensionResource(R.dimen.grid_padding)
+    val spaceBy = dimensionResource(R.dimen.grid_spacedBy)
     LazyColumn(
         modifier = modifier,
         state = lazyListState
@@ -66,8 +70,8 @@ fun PopularScreen(
             columnCount = 4,
             modifier = Modifier
                 .width(880.dp)
-                .padding(horizontal = 24.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
+                .padding(padding),
+            horizontalArrangement = Arrangement.spacedBy(spaceBy),
             itemContent = { index, item ->
                 SmallVideoCard(
                     data = VideoCardData(

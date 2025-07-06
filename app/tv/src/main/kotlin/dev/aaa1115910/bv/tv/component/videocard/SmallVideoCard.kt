@@ -1,12 +1,8 @@
 package dev.aaa1115910.bv.tv.component.videocard
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,12 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -36,7 +33,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,8 +49,8 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import dev.aaa1115910.bv.R
-import dev.aaa1115910.bv.tv.component.UpIcon
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
+import dev.aaa1115910.bv.tv.component.UpIcon
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.ImageSize
 import dev.aaa1115910.bv.util.resizedImageUrl
@@ -100,8 +99,9 @@ fun SmallVideoCardContent(
         animationSpec = spring(),
         label = "info scale"
     )*/
-    val infoOffsetY by animateDpAsState(
-        targetValue = if (hasFocus) 8.dp else 0.dp,
+    val finalOffsetY = LocalDensity.current.run { 6.dp.toPx() }
+    val infoOffsetY by animateFloatAsState(
+        targetValue = if (hasFocus) finalOffsetY else 0f,
         animationSpec = spring(),
         label = "info offset y"
     )
@@ -133,10 +133,12 @@ fun SmallVideoCardContent(
             )
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
         CardInfo(
-            modifier = Modifier
+            modifier = Modifier.graphicsLayer {
+                translationY = infoOffsetY
+            },
                 //.scale(infoScale)
-                .offset(y = infoOffsetY),
             title = data.title,
             upName = data.upName
         )
@@ -269,11 +271,7 @@ fun CardCover(
                     )
                 )
         )
-        AnimatedVisibility(
-            visible = showInfo,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
+        if(showInfo) {
             CoverBottomInfo(
                 play = play,
                 danmaku = danmaku,
@@ -284,21 +282,24 @@ fun CardCover(
 }
 
 @Composable
-private fun CardInfo(
+private fun ColumnScope.CardInfo(
     modifier: Modifier = Modifier,
     title: String,
     upName: String
 ) {
     Column(
-        modifier = modifier.padding(8.dp)
+        modifier = modifier
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            maxLines = 3,
+            minLines = 3,
+            overflow = TextOverflow.Visible
         )
+        Spacer(modifier = Modifier.height(4.dp))
         Row(
+            modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -331,7 +332,6 @@ fun SmallVideoCardWithoutFocusPreview() {
             modifier = Modifier.width(300.dp)
         ) {
             SmallVideoCardContent(
-                modifier = Modifier.padding(20.dp),
                 data = data,
                 hasFocus = false
             )
