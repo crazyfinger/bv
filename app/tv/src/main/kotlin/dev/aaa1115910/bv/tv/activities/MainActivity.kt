@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
             val isChecking by remember {
                 derivedStateOf { isCheckingNetwork || isCheckingUserLock }
             }
-            var isMainlandChina by remember { mutableStateOf(false) }
+//            var isMainlandChina by remember { mutableStateOf(false) }
             var userLockLocked by remember { mutableStateOf(false) }
 
             LaunchedEffect(Unit) {
@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 scope.launch(Dispatchers.Default) {
-                    isMainlandChina = NetworkUtil.isMainlandChina()
+//                    isMainlandChina = NetworkUtil.isMainlandChina()
                     isCheckingNetwork = false
                     keepSplashScreen = false
                 }
@@ -62,8 +62,8 @@ class MainActivity : ComponentActivity() {
             BVTheme {
                 if (isChecking) {
                     //避免在检查网络的期间加载屏幕内容，导致检查完毕后显示屏幕内容时出现初始焦点未成功设置的问题
-                } else if (isMainlandChina) {
-                    RegionBlockScreen()
+//                } else if (isMainlandChina) {
+//                    RegionBlockScreen()
                 } else {
                     //HomeScreen()
                     if (!userLockLocked) {
