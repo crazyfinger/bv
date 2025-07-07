@@ -48,6 +48,7 @@ import dev.aaa1115910.bv.tv.component.TopNavItem
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.isDpadRight
+import dev.aaa1115910.bv.util.isDpadUp
 import dev.aaa1115910.bv.util.isKeyDown
 
 //用于记住每个内容页当前选中的 Tab
@@ -72,6 +73,7 @@ fun NavigationDrawerScope.DrawerContent(
     onLogin: () -> Unit = {}
 ) {
     var selectedItem by remember { mutableStateOf(DrawerItem.Home) }
+    var focusInUser by remember { mutableStateOf(false) }
     val centerFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(selectedItem) {
@@ -83,9 +85,13 @@ fun NavigationDrawerScope.DrawerContent(
             .fillMaxHeight()
             .padding(12.dp)
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.isDpadRight()) {
-                    if (keyEvent.isKeyDown()) {
+                if (keyEvent.isKeyDown()) {
+                    if (keyEvent.isDpadRight()) {
                         onFocusToContent()
+                        return@onPreviewKeyEvent true
+                    }
+                    // 已经是最上时拦截事件
+                    if (keyEvent.isDpadUp() && focusInUser) {
                         return@onPreviewKeyEvent true
                     }
                 }
@@ -93,9 +99,11 @@ fun NavigationDrawerScope.DrawerContent(
             },
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-
+        // 用户
         NavigationDrawerItem(
-            modifier = Modifier,
+            modifier = Modifier.onFocusChanged {
+                focusInUser = it.hasFocus
+            },
             onClick = {
                 if (isLogin) {
                     onShowUserPanel()
@@ -158,7 +166,10 @@ fun NavigationDrawerScope.DrawerContent(
                                 item == DrawerItem.Home,
                                 Modifier.focusRequester(centerFocusRequester)
                             ),
-                        onClick = { selectedItem = item },
+                        onClick = {
+                            selectedItem = item
+                            onFocusToContent()
+                        },
                         selected = selectedItem == item,
                         leadingContent = {
                             Icon(
@@ -174,14 +185,18 @@ fun NavigationDrawerScope.DrawerContent(
         }
         NavigationDrawerItem(
             modifier = Modifier
+                .focusRestorer(centerFocusRequester)
                 .focusRequester(drawerItemFocusRequesters[DrawerItem.Settings]!!)
                 .onFocusChanged { if (it.hasFocus) selectedItem = DrawerItem.Settings },
-            onClick = { selectedItem = DrawerItem.Settings },
-            selected = false,
+            onClick = {
+                selectedItem = DrawerItem.Settings
+                onFocusToContent()
+            },
+            selected = selectedItem == DrawerItem.Settings,
             leadingContent = {
                 Icon(
                     imageVector = DrawerItem.Settings.displayIcon,
-                    contentDescription = null
+                    contentDescription = DrawerItem.Settings.displayName
                 )
             }
         ) {

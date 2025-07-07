@@ -54,7 +54,9 @@ import dev.aaa1115910.bv.tv.screens.settings.content.StorageSetting
 import dev.aaa1115910.bv.tv.screens.settings.content.UISetting
 import dev.aaa1115910.bv.tv.screens.settings.content.VideoCodecSetting
 import dev.aaa1115910.bv.ui.theme.BVTheme
+import dev.aaa1115910.bv.util.isDpadDown
 import dev.aaa1115910.bv.util.isDpadLeft
+import dev.aaa1115910.bv.util.isDpadUp
 import dev.aaa1115910.bv.util.isKeyDown
 import dev.aaa1115910.bv.util.requestFocus
 
@@ -73,15 +75,24 @@ fun SettingsScreen(
     var focusInNav by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     BackHandler {
-        drawerItemFocusRequesters[DrawerItem.Settings]?.requestFocus()
+        if (focusInNav) {
+            drawerItemFocusRequesters[DrawerItem.Settings]?.requestFocus(scope)
+        } else {
+            focusInNav = true
+        }
     }
     Scaffold(
         modifier = modifier
             .focusRequester(defaultFocusRequester)
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.isDpadLeft() && keyEvent.isKeyDown()) {
-                    drawerItemFocusRequesters[DrawerItem.Settings]?.requestFocus(scope)
-                    return@onPreviewKeyEvent true
+                // 只有最左边的选项，按左键时才向外传递事件
+                if (keyEvent.isKeyDown() && focusInNav) {
+                    if (keyEvent.isDpadUp() && currentMenu == SettingsMenuNavItem.entries.first()) {
+                        return@onPreviewKeyEvent true
+                    }
+                    if (keyEvent.isDpadDown() && currentMenu == SettingsMenuNavItem.entries.last()) {
+                        return@onPreviewKeyEvent true
+                    }
                 }
                 false
             },
@@ -279,10 +290,12 @@ fun SettingsDetail(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onPreviewKeyEvent {
-                val result = it.key.nativeKeyCode == android.view.KeyEvent.KEYCODE_DPAD_LEFT
-                if (result) onFocusBackMenuList()
-                result
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.isDpadLeft() && keyEvent.isKeyDown()) {
+                    onFocusBackMenuList()
+                    return@onPreviewKeyEvent true
+                }
+                false
             }
     ) {
         content()
