@@ -55,7 +55,7 @@ val currentSelectedTabs = mutableStateMapOf<DrawerItem,TopNavItem>()
 
 // 创建全局的 FocusRequester 映射表，方便外部使用
 val drawerItemFocusRequesters = mutableMapOf<DrawerItem, FocusRequester>().apply {
-    DrawerItem.entries.filter { it != DrawerItem.User && it != DrawerItem.Settings }
+    DrawerItem.entries.filter { it != DrawerItem.User }
         .forEach { item ->
             this[item] = FocusRequester()
         }
@@ -67,7 +67,6 @@ fun NavigationDrawerScope.DrawerContent(
     avatar: String = "",
     username: String = "",
     onDrawerItemChanged: (DrawerItem) -> Unit = {},
-    onOpenSettings: () -> Unit = {},
     onShowUserPanel: () -> Unit = {},
     onFocusToContent: () -> Unit = {},
     onLogin: () -> Unit = {}
@@ -174,8 +173,10 @@ fun NavigationDrawerScope.DrawerContent(
             }
         }
         NavigationDrawerItem(
-            modifier = Modifier,
-            onClick = onOpenSettings,
+            modifier = Modifier
+                .focusRequester(drawerItemFocusRequesters[DrawerItem.Settings]!!)
+                .onFocusChanged { if (it.hasFocus) selectedItem = DrawerItem.Settings },
+            onClick = { selectedItem = DrawerItem.Settings },
             selected = false,
             leadingContent = {
                 Icon(

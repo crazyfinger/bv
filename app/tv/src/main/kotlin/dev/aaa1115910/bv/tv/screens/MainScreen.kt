@@ -46,6 +46,7 @@ import dev.aaa1115910.bv.tv.screens.main.HomeContent
 import dev.aaa1115910.bv.tv.screens.main.PgcContent
 import dev.aaa1115910.bv.tv.screens.main.UgcContent
 import dev.aaa1115910.bv.tv.screens.search.SearchInputScreen
+import dev.aaa1115910.bv.tv.screens.settings.SettingsScreen
 import dev.aaa1115910.bv.util.fException
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.toast
@@ -75,6 +76,7 @@ fun MainScreen(
     val ugcFocusRequester = remember { FocusRequester() }
     val pgcFocusRequester = remember { FocusRequester() }
     val searchFocusRequester = remember { FocusRequester() }
+    val settingsFocusRequester = remember { FocusRequester() }
 
     val handleBack = {
         val currentTime = System.currentTimeMillis()
@@ -93,6 +95,7 @@ fun MainScreen(
             DrawerItem.UGC -> ugcFocusRequester.requestFocus()
             DrawerItem.PGC -> pgcFocusRequester.requestFocus()
             DrawerItem.Search -> searchFocusRequester.requestFocus()
+            DrawerItem.Settings -> settingsFocusRequester.requestFocus()
             else -> {}
         }
     }
@@ -119,9 +122,6 @@ fun MainScreen(
                 //avatar = "https://i2.hdslb.com/bfs/face/ef0457addb24141e15dfac6fbf45293ccf1e32ab.jpg",
                 //username = "碧诗",
                 onDrawerItemChanged = { selectedDrawerItem = it },
-                onOpenSettings = {
-                    context.startActivity(Intent(context, SettingsActivity::class.java))
-                },
                 onShowUserPanel = {
                     showUserPanel = true
                 },
@@ -155,6 +155,7 @@ fun MainScreen(
                     DrawerItem.UGC -> UgcContent(contentFocusRequester = ugcFocusRequester)
                     DrawerItem.PGC -> PgcContent(contentFocusRequester = pgcFocusRequester)
                     DrawerItem.Search -> SearchInputScreen(defaultFocusRequester = searchFocusRequester)
+                    DrawerItem.Settings -> SettingsScreen(defaultFocusRequester = settingsFocusRequester)
                     else -> {}
                 }
             }

@@ -1,6 +1,7 @@
 package dev.aaa1115910.bv.tv.screens.settings
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,8 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import dev.aaa1115910.bv.R
+import dev.aaa1115910.bv.tv.screens.main.DrawerItem
+import dev.aaa1115910.bv.tv.screens.main.drawerItemFocusRequesters
 import dev.aaa1115910.bv.tv.screens.settings.content.AboutSetting
 import dev.aaa1115910.bv.tv.screens.settings.content.ApiSetting
 import dev.aaa1115910.bv.tv.screens.settings.content.AudioSetting
@@ -51,11 +54,14 @@ import dev.aaa1115910.bv.tv.screens.settings.content.StorageSetting
 import dev.aaa1115910.bv.tv.screens.settings.content.UISetting
 import dev.aaa1115910.bv.tv.screens.settings.content.VideoCodecSetting
 import dev.aaa1115910.bv.ui.theme.BVTheme
+import dev.aaa1115910.bv.util.isDpadLeft
+import dev.aaa1115910.bv.util.isKeyDown
 import dev.aaa1115910.bv.util.requestFocus
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    defaultFocusRequester: FocusRequester = FocusRequester(),
 ) {
     val showLargeTitle by remember { derivedStateOf { true } }
     val titleFontSize by animateFloatAsState(
@@ -65,9 +71,20 @@ fun SettingsScreen(
 
     var currentMenu by remember { mutableStateOf(SettingsMenuNavItem.Resolution) }
     var focusInNav by remember { mutableStateOf(false) }
-
+    val scope = rememberCoroutineScope()
+    BackHandler {
+        drawerItemFocusRequesters[DrawerItem.Settings]?.requestFocus()
+    }
     Scaffold(
-        modifier = modifier,
+        modifier = modifier
+            .focusRequester(defaultFocusRequester)
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.isDpadLeft() && keyEvent.isKeyDown()) {
+                    drawerItemFocusRequesters[DrawerItem.Settings]?.requestFocus(scope)
+                    return@onPreviewKeyEvent true
+                }
+                false
+            },
         topBar = {
             Box(
                 modifier = Modifier.padding(
@@ -132,9 +149,10 @@ fun SettingsNav(
         if (isFocusing) focusRequester.requestFocus(scope)
     }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus(scope)
-    }
+    //移除自动获取焦点
+//    LaunchedEffect(Unit) {
+//        focusRequester.requestFocus(scope)
+//    }
 
     LazyColumn(
         modifier = modifier,
