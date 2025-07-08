@@ -140,6 +140,7 @@ fun SmallVideoCardContent(
             },
                 //.scale(infoScale)
             title = data.title,
+            pubTime = data.pubTime,
             upName = data.upName
         )
     }
@@ -285,12 +286,14 @@ fun CardCover(
 private fun ColumnScope.CardInfo(
     modifier: Modifier = Modifier,
     title: String,
-    upName: String
+    upName: String,
+    pubTime: String?
 ) {
     Column(
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Text(
+            modifier = Modifier,
             text = title,
             style = MaterialTheme.typography.titleMedium,
             maxLines = 3,
@@ -299,17 +302,27 @@ private fun ColumnScope.CardInfo(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Row(
-            modifier = modifier,
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             UpIcon()
             Text(
+                modifier = Modifier.weight(1f)
+                    .padding(end = 2.dp),
                 text = upName,
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            pubTime?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible
+                )
+            }
         }
     }
 }
@@ -325,6 +338,7 @@ fun SmallVideoCardWithoutFocusPreview() {
         upName = "bishi",
         play = 2333,
         danmaku = 666,
+        pubTime = "2小时前",
         time = 2333 * 1000
     )
     BVTheme {
@@ -350,6 +364,7 @@ fun SmallVideoCardWithFocusPreview() {
         upName = "bishi",
         play = 2333,
         danmaku = 666,
+        pubTime = "3小时前",
         time = 2333 * 1000
     )
     BVTheme {

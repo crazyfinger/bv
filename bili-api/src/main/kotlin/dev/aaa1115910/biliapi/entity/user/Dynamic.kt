@@ -735,6 +735,7 @@ data class DynamicVideoData(
  * @property duration 视频时长，单位秒
  * @property play 视频播放量
  * @property danmaku 视频弹幕数
+ * @property pubTime 发布时间
  * @property avatar 视频作者头像
  */
 data class DynamicVideo(
@@ -749,6 +750,7 @@ data class DynamicVideo(
     val duration: Int,
     val play: Int,
     val danmaku: Int,
+    val pubTime: String? = null,
     val avatar: String,
     val time: Long = 0L,
 ) {
@@ -767,6 +769,7 @@ data class DynamicVideo(
                 duration = convertStringTimeToSeconds(archive.durationText),
                 play = convertStringPlayCountToNumberPlayCount(archive.stat.play),
                 danmaku = convertStringPlayCountToNumberPlayCount(archive.stat.danmaku),
+                pubTime = author.pubTime,
                 avatar = author.face,
             )
         }
