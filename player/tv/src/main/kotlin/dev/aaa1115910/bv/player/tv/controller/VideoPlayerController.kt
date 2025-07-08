@@ -242,6 +242,10 @@ fun VideoPlayerController(
                         if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
 
+                        if (showInfo) {
+                            showInfo = false
+                            return@onPreviewKeyEvent true
+                        }
                         if (!videoPlayer.isPlaying) {
                             logger.fInfo { "Exiting video player" }
                             onExit()
