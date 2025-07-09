@@ -23,7 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.dimensionResource
+import dev.aaa1115910.bv.tv.R
 import dev.aaa1115910.bv.tv.component.PgcTopNavItem
 import dev.aaa1115910.bv.tv.component.TopNav
 import dev.aaa1115910.bv.tv.screens.main.pgc.AnimeContent
@@ -125,7 +126,7 @@ fun PgcContent(
             TopNav(
                 modifier = Modifier
                     .focusRequester(navFocusRequester)
-                    .padding(end = 80.dp)
+                    .padding(end = dimensionResource(R.dimen.home_top_nav_padding_end))
                     .onFocusChanged { topNavHasFocus = it.hasFocus },
                 items = PgcTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,

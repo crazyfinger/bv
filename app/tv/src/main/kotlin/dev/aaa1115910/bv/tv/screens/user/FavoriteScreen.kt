@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,7 +54,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun FavoriteScreen(
     modifier: Modifier = Modifier,
-    favoriteViewModel: FavoriteViewModel = koinViewModel()
+    favoriteViewModel: FavoriteViewModel = koinViewModel(),
+    onlyShowContent: Boolean = false,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -94,6 +96,7 @@ fun FavoriteScreen(
     Scaffold(
         modifier = modifier,
         topBar = {
+            if (onlyShowContent) return@Scaffold
             Box(
                 modifier = Modifier.padding(start = 48.dp, top = 24.dp, bottom = 8.dp, end = 48.dp)
             ) {
@@ -121,9 +124,9 @@ fun FavoriteScreen(
             modifier = Modifier.padding(innerPadding),
             state = lazyGridState,
             columns = GridCells.Fixed(4),
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(dimensionResource(dev.aaa1115910.bv.tv.R.dimen.grid_padding)),
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(dev.aaa1115910.bv.tv.R.dimen.grid_padding)),
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(dev.aaa1115910.bv.tv.R.dimen.grid_spacedBy)),
         ) {
             item(
                 span = { GridItemSpan(4) }

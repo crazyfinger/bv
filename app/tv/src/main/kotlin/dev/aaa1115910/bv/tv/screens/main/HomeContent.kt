@@ -23,12 +23,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
+import dev.aaa1115910.bv.tv.R
 import dev.aaa1115910.bv.tv.component.HomeTopNavItem
 import dev.aaa1115910.bv.tv.component.TopNav
 import dev.aaa1115910.bv.tv.screens.main.home.DynamicsScreen
 import dev.aaa1115910.bv.tv.screens.main.home.PopularScreen
 import dev.aaa1115910.bv.tv.screens.main.home.RecommendScreen
+import dev.aaa1115910.bv.tv.screens.main.home.UserScreen
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.requestFocus
 import dev.aaa1115910.bv.viewmodel.UserViewModel
@@ -55,6 +58,7 @@ fun HomeContent(
     val recommendState = rememberLazyListState()
     val popularState = rememberLazyListState()
     val dynamicState = rememberLazyListState()
+    val userState = rememberLazyListState()
 
 //    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
     var focusOnContent by remember { mutableStateOf(false) }
@@ -77,6 +81,7 @@ fun HomeContent(
                     HomeTopNavItem.Recommend -> recommendState
                     HomeTopNavItem.Popular -> popularState
                     HomeTopNavItem.Dynamics -> dynamicState
+                    HomeTopNavItem.User -> userState
                 }
             ) {
                 firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0
@@ -126,6 +131,7 @@ fun HomeContent(
                 HomeTopNavItem.Recommend -> recommendState.animateScrollToItem(0)
                 HomeTopNavItem.Popular -> popularState.animateScrollToItem(0)
                 HomeTopNavItem.Dynamics -> dynamicState.animateScrollToItem(0)
+                HomeTopNavItem.User -> {} //用户页面不需要滚动到顶部
             }
         }
     }
@@ -136,7 +142,7 @@ fun HomeContent(
             TopNav(
                 modifier = Modifier
                     .focusRequester(navFocusRequester)
-                    .padding(end = 80.dp)
+                    .padding(end = dimensionResource(R.dimen.home_top_nav_padding_end))
                     .onFocusChanged { topNavFocus = it.hasFocus },
                 items = HomeTopNavItem.entries,
                 isLargePadding = !focusOnContent && currentListOnTop,
@@ -151,6 +157,7 @@ fun HomeContent(
                                 scope.launch(Dispatchers.IO) { dynamicViewModel.loadMoreVideo() }
                             }
                         }
+                        HomeTopNavItem.User -> {} //用户页面不需要特殊处理
                     }
                 },
                 onClick = { nav ->
@@ -175,6 +182,8 @@ fun HomeContent(
                             logger.fInfo { "reload dynamic data" }
                             scope.launch(Dispatchers.IO) { dynamicViewModel.loadMoreVideo() }
                         }
+
+                        HomeTopNavItem.User -> {} // 用户页面不需要刷新数据
                     }
                 },
                 onLeftKeyEvent = {
@@ -208,6 +217,10 @@ fun HomeContent(
                     HomeTopNavItem.Recommend -> RecommendScreen(lazyListState = recommendState)
                     HomeTopNavItem.Popular -> PopularScreen(lazyListState = popularState)
                     HomeTopNavItem.Dynamics -> DynamicsScreen(lazyListState = dynamicState)
+                    HomeTopNavItem.User -> UserScreen(
+                        contentFocusRequester = contentFocusRequester,
+                        topNavFocusRequester = navFocusRequester,
+                    )
                 }
             }
         }
