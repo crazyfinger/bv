@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -65,6 +66,7 @@ import dev.aaa1115910.bv.util.removeHtmlTags
 import dev.aaa1115910.bv.util.requestFocus
 import dev.aaa1115910.bv.viewmodel.search.SearchResultViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -170,7 +172,7 @@ fun SearchResultScreen(
     }
 
     LaunchedEffect(currentIndex) {
-        if (currentIndex + 24 > searchResult.count) {
+        if (currentIndex + 8 > searchResult.count) {
             searchResultViewModel.loadMore(searchResult.type)
         }
     }
@@ -213,7 +215,9 @@ fun SearchResultScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -230,7 +234,12 @@ fun SearchResultScreen(
                         Tab(
                             modifier = tabModifier,
                             selected = isSelected,
-                            onFocus = { searchResultViewModel.searchType = type },
+                            onFocus = {
+                                scope.launch {
+                                    searchResultViewModel.searchType = type
+                                    searchResultViewModel.init(type)
+                                }
+                            },
                         ) {
                             Text(
                                 text = type.getDisplayName(context),
