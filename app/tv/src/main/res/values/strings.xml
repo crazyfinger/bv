@@ -23,4 +23,7 @@
     <string name="title_activity_user_switch">用户切换</string>
     <string name="title_activity_video_info">视频信息</string>
     <string name="title_activity_video_player_v3">视频播放</string>
+    <string name="have_added_to_default_favorite_folder_successfully">已添加到默认收藏夹</string>
+    <string name="add_to_favorite_success">收藏成功</string>
+    <string name="cancel_favorited">已取消收藏</string>
 </resources>

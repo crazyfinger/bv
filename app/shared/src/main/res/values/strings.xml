@@ -681,4 +681,15 @@
     <string name="video_player_referer">https://www.bilibili.com</string>
     <string name="video_player_user_agent_client">Bilibili Freedoooooom/MarkII</string>
     <string name="video_player_user_agent_http">Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36</string>
+    <string name="like_button_text">点赞</string>
+    <string name="coin_button_text">投币</string>
+    <string name="favorite_at">藏</string>
+    <string name="view_at">看</string>
+
+    <string name="settings_other_portrait_video_quality_title">竖屏视频最大清晰度为1080P</string>
+    <string name="settings_other_portrait_video_quality_text">设置竖屏视频播放时的最大清晰度为1080P</string>
+    <string name="settings_player_exit_when_all_is_played_title">都播完后退出播放器</string>
+    <string name="settings_player_exit_when_all_is_played_text">都播完后退出播放器回视频详情页</string>
+    <string name="settings_player_show_debug_info_title">播放器显示视频信息</string>
+    <string name="settings_player_show_debug_info_text">在视频播放页面左下角显示视频信息</string>
 </resources>
