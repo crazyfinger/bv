@@ -110,7 +110,8 @@ data class FavoriteItem(
     val upper: Upper,
     val link: String,
     val pubtime: Long,
-    val bvid: String
+    val favTime: Long,
+    val bvid: String,
 ) {
     companion object {
         fun fromHttpFavoriteItem(httpFavoriteItem: dev.aaa1115910.biliapi.http.entity.user.favorite.FavoriteItem): FavoriteItem {
@@ -125,6 +126,7 @@ data class FavoriteItem(
                 upper = Upper.fromHttpUpper(httpFavoriteItem.upper),
                 link = httpFavoriteItem.link,
                 pubtime = httpFavoriteItem.pubtime,
+                favTime = httpFavoriteItem.favTime,
                 bvid = httpFavoriteItem.bvid
             )
         }

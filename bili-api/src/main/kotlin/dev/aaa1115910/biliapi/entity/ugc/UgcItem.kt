@@ -107,7 +107,8 @@ data class UgcItem(
                 author = archive.author.name,
                 cover = archive.cover,
                 play = archive.stat.view,
-                danmaku = archive.stat.danmaku
+                danmaku = archive.stat.danmaku,
+                pubTime = archive.pubdate.toSmartDate(),
             )
     }
 }
@@ -142,9 +143,9 @@ fun Long.toSmartDate(timeZone: TimeZone = TimeZone.getDefault()): String? {
 
         // 动态格式选择
         val pattern = if (cal.get(Calendar.YEAR) == currentYear) {
-            "M月d日HH:mm"
+            "M月d日 HH:mm"
         } else {
-            "yyyy年M月d日HH:mm"
+            "yyyy年M月d日 HH:mm"
         }
 
         // 线程安全的日期格式化

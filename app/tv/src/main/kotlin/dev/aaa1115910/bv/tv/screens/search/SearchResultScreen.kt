@@ -45,6 +45,7 @@ import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import dev.aaa1115910.biliapi.entity.ApiType
+import dev.aaa1115910.biliapi.entity.ugc.toSmartDate
 import dev.aaa1115910.biliapi.repositories.SearchType
 import dev.aaa1115910.biliapi.repositories.SearchTypeResult
 import dev.aaa1115910.bv.R
@@ -309,6 +310,9 @@ private fun SearchResultListItem(
                     avid = searchResult.aid,
                     title = searchResult.title.removeHtmlTags(),
                     cover = searchResult.cover,
+                    play = with(searchResult.play) { if (this == -1) null else this },
+                    danmaku = with(searchResult.danmaku) { if (this == -1) null else this },
+                    pubTime = searchResult.pubTime.toLong().toSmartDate(),
                     upName = searchResult.author,
                     time = searchResult.duration * 1000L
                 ),
