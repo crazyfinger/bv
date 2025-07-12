@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -73,7 +74,7 @@ fun UgcRegionScaffold(
     val padding = dimensionResource(R.dimen.grid_padding)
     val spaceBy = dimensionResource(R.dimen.grid_spacedBy)
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         state = state.lazyListState
     ) {
         if (state.showCarousel) {

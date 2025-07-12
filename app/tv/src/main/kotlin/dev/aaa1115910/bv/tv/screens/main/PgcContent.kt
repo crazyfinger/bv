@@ -4,10 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
@@ -34,6 +33,7 @@ import dev.aaa1115910.bv.tv.screens.main.pgc.MovieContent
 import dev.aaa1115910.bv.tv.screens.main.pgc.TvContent
 import dev.aaa1115910.bv.tv.screens.main.pgc.VarietyContent
 import dev.aaa1115910.bv.util.fInfo
+import dev.aaa1115910.bv.util.rememberDebouncer
 import dev.aaa1115910.bv.util.requestFocus
 import dev.aaa1115910.bv.viewmodel.pgc.PgcAnimeViewModel
 import dev.aaa1115910.bv.viewmodel.pgc.PgcDocumentaryViewModel
@@ -70,6 +70,10 @@ fun PgcContent(
 //    var selectedTab by remember { mutableStateOf(PgcTopNavItem.Anime) }
     var focusOnContent by remember { mutableStateOf(false) }
     var topNavHasFocus by remember { mutableStateOf(false) }
+
+    // 用于控制Tab选择后的延迟加载的防抖器（自动管理生命周期）
+    val tabSelectionDebouncer = rememberDebouncer<PgcTopNavItem>(250L)
+
     val initialSelectedTab = currentSelectedTabs[DrawerItem.PGC]
     var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
@@ -102,6 +106,7 @@ fun PgcContent(
     val navFocusRequester = remember { FocusRequester() }
     BackHandler(focusOnContent || topNavHasFocus) {
         logger.fInfo { "onFocusBackToNav" }
+        // 如果顶部导航有焦点，则返回到左边栏的PGC位置
         if (topNavHasFocus) {
             drawerItemFocusRequesters[DrawerItem.PGC]?.requestFocus(scope)
             return@BackHandler
@@ -132,7 +137,9 @@ fun PgcContent(
                 isLargePadding = !focusOnContent && currentListOnTop,
                 initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
-                    selectedTab = nav as PgcTopNavItem
+                    tabSelectionDebouncer.debounce(scope, nav as PgcTopNavItem) { selectedNavItem ->
+                        selectedTab = selectedNavItem
+                    }
                 },
                 onClick = { nav ->
                     when (nav) {
@@ -154,6 +161,7 @@ fun PgcContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
@@ -161,14 +169,15 @@ fun PgcContent(
                 targetState = selectedTab,
                 label = "pgc animated content",
                 transitionSpec = {
-                    val coefficient = 10
-                    if (targetState.ordinal < initialState.ordinal) {
-                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { it / coefficient }
-                    } else {
-                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { -it / coefficient }
-                    }
+                    fadeIn() togetherWith fadeOut()
+//                    val coefficient = 10
+//                    if (targetState.ordinal < initialState.ordinal) {
+//                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { it / coefficient }
+//                    } else {
+//                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { -it / coefficient }
+//                    }
                 }
             ) { screen ->
                 when (screen) {

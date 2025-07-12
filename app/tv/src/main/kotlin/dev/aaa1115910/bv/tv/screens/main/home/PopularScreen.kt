@@ -62,7 +62,7 @@ fun PopularScreen(
     val padding = dimensionResource(R.dimen.grid_padding)
     val spaceBy = dimensionResource(R.dimen.grid_spacedBy)
     LazyColumn(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         state = lazyListState
     ) {
         gridItems(

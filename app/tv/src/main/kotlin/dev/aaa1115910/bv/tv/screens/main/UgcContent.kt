@@ -4,10 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -57,6 +56,7 @@ import dev.aaa1115910.bv.tv.screens.main.ugc.UgcScaffoldState
 import dev.aaa1115910.bv.tv.screens.main.ugc.VlogContent
 import dev.aaa1115910.bv.tv.screens.main.ugc.rememberUgcScaffoldState
 import dev.aaa1115910.bv.util.fInfo
+import dev.aaa1115910.bv.util.rememberDebouncer
 import dev.aaa1115910.bv.util.requestFocus
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -104,6 +104,10 @@ fun UgcContent(
 //    var selectedTab by remember { mutableStateOf(UgcTopNavItem.Douga) }
     var focusOnContent by remember { mutableStateOf(false) }
     var topNavHasFocus by remember { mutableStateOf(false) }
+
+    // 用于控制Tab选择后的延迟加载的防抖器（自动管理生命周期）
+    val tabSelectionDebouncer = rememberDebouncer<UgcTopNavItem>(250L)
+
     val initialSelectedTab = currentSelectedTabs[DrawerItem.UGC]
     var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
@@ -177,7 +181,9 @@ fun UgcContent(
                 isLargePadding = !focusOnContent,
                 initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
-                    selectedTab = nav as UgcTopNavItem
+                    tabSelectionDebouncer.debounce(scope, nav as UgcTopNavItem) { selectedNavItem ->
+                        selectedTab = selectedNavItem
+                    }
                 },
                 onClick = { nav ->
                     when (nav) {
@@ -224,6 +230,7 @@ fun UgcContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
@@ -231,14 +238,15 @@ fun UgcContent(
                 targetState = selectedTab,
                 label = "ugc animated content",
                 transitionSpec = {
-                    val coefficient = 10
-                    if (targetState.ordinal < initialState.ordinal) {
-                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { it / coefficient }
-                    } else {
-                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { -it / coefficient }
-                    }
+                    fadeIn() togetherWith fadeOut()
+//                    val coefficient = 10
+//                    if (targetState.ordinal < initialState.ordinal) {
+//                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { it / coefficient }
+//                    } else {
+//                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { -it / coefficient }
+//                    }
                 }
             ) { screen ->
                 when (screen) {

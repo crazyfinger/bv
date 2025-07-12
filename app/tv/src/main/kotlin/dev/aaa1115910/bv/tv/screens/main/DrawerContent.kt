@@ -83,7 +83,7 @@ fun NavigationDrawerScope.DrawerContent(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .padding(12.dp)
+            .padding(4.dp)
             .onPreviewKeyEvent { keyEvent ->
                 if (keyEvent.isKeyDown()) {
                     if (keyEvent.isDpadRight()) {

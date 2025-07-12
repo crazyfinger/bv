@@ -4,10 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
@@ -24,7 +23,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import dev.aaa1115910.bv.tv.R
 import dev.aaa1115910.bv.tv.component.HomeTopNavItem
 import dev.aaa1115910.bv.tv.component.TopNav
@@ -33,6 +31,7 @@ import dev.aaa1115910.bv.tv.screens.main.home.PopularScreen
 import dev.aaa1115910.bv.tv.screens.main.home.RecommendScreen
 import dev.aaa1115910.bv.tv.screens.main.home.UserScreen
 import dev.aaa1115910.bv.util.fInfo
+import dev.aaa1115910.bv.util.rememberDebouncer
 import dev.aaa1115910.bv.util.requestFocus
 import dev.aaa1115910.bv.viewmodel.UserViewModel
 import dev.aaa1115910.bv.viewmodel.home.DynamicViewModel
@@ -40,6 +39,7 @@ import dev.aaa1115910.bv.viewmodel.home.PopularViewModel
 import dev.aaa1115910.bv.viewmodel.home.RecommendViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -63,6 +63,11 @@ fun HomeContent(
 //    var selectedTab by remember { mutableStateOf(HomeTopNavItem.Recommend) }
     var focusOnContent by remember { mutableStateOf(false) }
     var topNavFocus by remember { mutableStateOf(false) }
+
+    // 用于控制Tab选择后的延迟加载的防抖器（自动管理生命周期）
+    val tabSelectionDebouncer = rememberDebouncer<HomeTopNavItem>(250L)
+    // 从全局状态获取上次选择的标签位置，如果没有则默认为Recommend
+    // 将这个值提到可组合函数的顶部，避免在重组时重新计算
     val initialSelectedTab = currentSelectedTabs[DrawerItem.Home]
     var selectedTab by remember(initialSelectedTab) {
         mutableStateOf(
@@ -89,19 +94,15 @@ fun HomeContent(
         }
     }
 
-    //启动时刷新数据
+    // 启动时触发一次屏幕切换，确保tab和内容同步
     LaunchedEffect(Unit) {
-        scope.launch(Dispatchers.IO) {
-            recommendViewModel.loadMore()
-        }
-        scope.launch(Dispatchers.IO) {
-            popularViewModel.loadMore()
-        }
-        scope.launch(Dispatchers.IO) {
-            dynamicViewModel.loadMoreVideo()
-        }
-        scope.launch(Dispatchers.IO) {
-            userViewModel.updateUserInfo()
+        // 强制触发一次当前选中tab的内容切换，通过重新设置selectedTab来实现
+        val currentTab = selectedTab
+        logger.fInfo { "初始化切换到 $currentTab 屏幕" }
+        // 短暂延迟后重新设置tab，触发AnimatedContent切换
+        scope.launch {
+            delay(50)
+            selectedTab = currentTab
         }
     }
 
@@ -148,17 +149,19 @@ fun HomeContent(
                 isLargePadding = !focusOnContent && currentListOnTop,
                 initialSelectedItem = selectedTab,
                 onSelectedChanged = { nav ->
-                    selectedTab = nav as HomeTopNavItem
-                    when (nav) {
-                        HomeTopNavItem.Recommend -> {}
-                        HomeTopNavItem.Popular -> {}
-                        HomeTopNavItem.Dynamics -> {
-                            if (!dynamicViewModel.loadingVideo && dynamicViewModel.isLogin && dynamicViewModel.dynamicVideoList.isEmpty()) {
-                                scope.launch(Dispatchers.IO) { dynamicViewModel.loadMoreVideo() }
-                            }
-                        }
-                        HomeTopNavItem.User -> {} //用户页面不需要特殊处理
+                    tabSelectionDebouncer.debounce(scope, nav as HomeTopNavItem) { selectedNavItem ->
+                        selectedTab = selectedNavItem
                     }
+//                    when (nav) {
+//                        HomeTopNavItem.Recommend -> {}
+//                        HomeTopNavItem.Popular -> {}
+//                        HomeTopNavItem.Dynamics -> {
+//                            if (!dynamicViewModel.loadingVideo && dynamicViewModel.isLogin && dynamicViewModel.dynamicVideoList.isEmpty()) {
+//                                scope.launch(Dispatchers.IO) { dynamicViewModel.loadMoreVideo() }
+//                            }
+//                        }
+//                        HomeTopNavItem.User -> {} //用户页面不需要特殊处理
+//                    }
                 },
                 onClick = { nav ->
                     when (nav) {
@@ -196,6 +199,7 @@ fun HomeContent(
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .fillMaxSize()
                 .focusRequester(contentFocusRequester)
                 .onFocusChanged { focusOnContent = it.hasFocus }
         ) {
@@ -203,15 +207,18 @@ fun HomeContent(
                 targetState = selectedTab,
                 label = "home animated content",
                 transitionSpec = {
-                    val coefficient = 10
-                    if (targetState.ordinal < initialState.ordinal) {
-                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { it / coefficient }
-                    } else {
-                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
-                                fadeOut() + slideOutHorizontally { -it / coefficient }
-                    }
+                    fadeIn() togetherWith fadeOut()
                 }
+//                transitionSpec = {
+//                    val coefficient = 10
+//                    if (targetState.ordinal < initialState.ordinal) {
+//                        fadeIn() + slideInHorizontally { -it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { it / coefficient }
+//                    } else {
+//                        fadeIn() + slideInHorizontally { it / coefficient } togetherWith
+//                                fadeOut() + slideOutHorizontally { -it / coefficient }
+//                    }
+//                }
             ) { screen ->
                 when (screen) {
                     HomeTopNavItem.Recommend -> RecommendScreen(lazyListState = recommendState)
