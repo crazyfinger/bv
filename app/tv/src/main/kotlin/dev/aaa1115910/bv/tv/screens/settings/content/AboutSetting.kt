@@ -48,6 +48,9 @@ fun AboutSetting(
         launch(Dispatchers.IO) {
             runCatching {
                 latestVersionName = GithubApi.getLatestBuild().name
+                if (latestVersionName.isEmpty()) {
+                    latestVersionName = GithubApi.getLatestBuild().tagName
+                }
                 logger.fInfo { "Find latest version $latestVersionName" }
             }.onFailure {
                 logger.fException(it) { "Failed to get latest version" }

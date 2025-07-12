@@ -132,7 +132,7 @@ fun VideoPlayerV3Screen(
                         seasonId = nextVideo.seasonId,
                         continuePlayNext = true
                     )
-                } else {
+                } else if (Prefs.playerExitWhenAllIsPlayed) {
                     (context as Activity).finish()
                 }
             },
