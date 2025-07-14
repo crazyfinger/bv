@@ -26,4 +26,13 @@
     <string name="have_added_to_default_favorite_folder_successfully">已添加到默认收藏夹</string>
     <string name="add_to_favorite_success">收藏成功</string>
     <string name="cancel_favorited">已取消收藏</string>
+    <string name="zan_success">点赞成功</string>
+    <string name="zan_failed">点赞失败</string>
+    <string name="cancel_zan_success">已取消点赞</string>
+    <string name="cancel_zan_failed">取消点赞失败</string>
+    <string name="give_coin_success">投币成功</string>
+    <string name="give_coin_failed">投币失败</string>
+    <string name="one_click_triple_success">一键三连</string>
+    <string name="one_click_tripple_failed">一键三连失败</string>
+    <string name="still_working">还在施工中</string>
 </resources>

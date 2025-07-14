@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -52,8 +53,18 @@ import dev.aaa1115910.bv.util.formatHourMinSec
 fun ControllerVideoInfo(
     modifier: Modifier = Modifier,
     show: Boolean,
-    onHideInfo: () -> Unit
-) {
+    onHideInfo: () -> Unit,
+    focusRequester: FocusRequester? = null,
+    isPlayingLambda: () -> Boolean,
+    isShowDanmakuLambda: () -> Boolean,
+    onClickPlay: () -> Unit = {},
+    isLikedLambda: () -> Boolean,
+    onClickLike: () -> Unit = {},
+    onLongClickClickLike: () -> Unit = {},
+    onClickDanmaku: () -> Unit = {},
+    onClickSetting: () -> Unit = {},
+    onClickBack: () -> Unit = {},
+    ) {
     val videoPlayerClockData = LocalVideoPlayerClockData.current
     val videoPlayerSeekData = LocalVideoPlayerSeekData.current
     val videoPlayerSeekThumbData = LocalVideoPlayerSeekThumbData.current
@@ -82,7 +93,16 @@ fun ControllerVideoInfo(
         modifier = modifier.fillMaxSize()
     ) {
         AnimatedVisibility(
-            modifier = Modifier.align(Alignment.TopCenter),
+            modifier = modifier
+                .align(Alignment.TopEnd)
+                .clip(
+                    MaterialTheme.shapes.large.copy(
+                        topStart = CornerSize(0.dp),
+                        topEnd = CornerSize(0.dp)
+                    )
+                )
+                .background(Color.Black.copy(0.5f))
+                .padding(horizontal = 32.dp, vertical = 16.dp),
             visible = show,
             enter = expandVertically(),
             exit = shrinkVertically(),
@@ -107,10 +127,20 @@ fun ControllerVideoInfo(
         ) {
             ControllerVideoInfoBottom(
                 seekData = videoPlayerSeekData,
-                partTitle = videoPlayerVideoInfoData.partTitle,
                 idleIcon = videoPlayerSeekThumbData.idleIcon,
-                movingIcon = videoPlayerSeekThumbData.movingIcon
-            )
+                movingIcon = videoPlayerSeekThumbData.movingIcon,
+                isPlayingLambda = isPlayingLambda,
+                isShowDanmakuLambda = isShowDanmakuLambda,
+                isLikedLambda = isLikedLambda,
+                focusRequester = focusRequester,
+                onClickPlay = onClickPlay,
+                onClickLike = onClickLike,
+                onLongClickLike = onLongClickClickLike,
+                onClickDanmaku = onClickDanmaku,
+                onClickSetting = onClickSetting,
+                onClickBack = onClickBack,
+                onFocusBack = onHideInfo,
+                )
         }
     }
 }
@@ -155,17 +185,27 @@ fun ControllerVideoInfoTop(
 @Composable
 fun ControllerVideoInfoBottom(
     modifier: Modifier = Modifier,
-    partTitle: String,
     seekData: VideoPlayerSeekData,
     idleIcon: String,
-    movingIcon: String
+    movingIcon: String,
+    isPlayingLambda: () -> Boolean,
+    isShowDanmakuLambda: () -> Boolean,
+    isLikedLambda: () -> Boolean,
+    focusRequester: FocusRequester?,
+    onClickPlay: () -> Unit,
+    onClickLike: () -> Unit,
+    onLongClickLike: () -> Unit,
+    onClickDanmaku: () -> Unit,
+    onClickSetting: () -> Unit,
+    onClickBack: () -> Unit,
+    onFocusBack: () -> Unit,
 ) {
     Column(
         modifier = modifier
-            .clip(
-                MaterialTheme.shapes.large
-                    .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
-            )
+//            .clip(
+//                MaterialTheme.shapes.large
+//                    .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
+//            )
             .background(Color.Black.copy(0.5f)),
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -174,22 +214,22 @@ fun ControllerVideoInfoBottom(
                 .fillMaxWidth()
                 .padding(top = 12.dp)
                 .focusable(false),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Bottom
         ) {
-            Text(
-                modifier = Modifier
-                    .padding(horizontal = 28.dp)
-                    .fillMaxWidth(0.7f),
-                text = partTitle,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.headlineSmall,
-//                style = MaterialTheme.typography.displaySmall.copy(
-//                    fontSize = (MaterialTheme.typography.displaySmall.fontSize.value - 10).sp
-//                ),
-            )
+//            Text(
+//                modifier = Modifier
+//                    .padding(horizontal = 28.dp)
+//                    .fillMaxWidth(0.7f),
+//                text = partTitle,
+//                color = Color.White,
+//                maxLines = 1,
+//                overflow = TextOverflow.Ellipsis,
+//                style = MaterialTheme.typography.headlineSmall,
+////                style = MaterialTheme.typography.displaySmall.copy(
+////                    fontSize = (MaterialTheme.typography.displaySmall.fontSize.value - 10).sp
+////                ),
+//            )
             Text(
                 modifier = Modifier.padding(top = 16.dp, bottom = 0.dp, end = 32.dp),
                 text = "${seekData.position.formatHourMinSec()} / ${seekData.duration.formatHourMinSec()}",
@@ -199,13 +239,30 @@ fun ControllerVideoInfoBottom(
         VideoSeekBar(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 16.dp),
             duration = seekData.duration,
             position = seekData.position,
             bufferedPercentage = seekData.bufferedPercentage,
             moveState = SeekMoveState.Idle,
             idleIcon = idleIcon,
             movingIcon = movingIcon
+        )
+        VideoBottomController(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            seekData = seekData,
+            isPlayingLambda = isPlayingLambda,
+            isShowDanmakuLambda = isShowDanmakuLambda,
+            isLikedLambda = isLikedLambda,
+            focusRequester = focusRequester,
+            onClickPlay = onClickPlay,
+            onClickLike = onClickLike,
+            onLongClickLike = onLongClickLike,
+            onClickDanmaku = onClickDanmaku,
+            onClickSetting = onClickSetting,
+            onClickBack = onClickBack,
+            onFocusBack = onFocusBack,
         )
     }
 }
@@ -288,6 +345,9 @@ private fun ControllerVideoInfoPreview() {
                 modifier = Modifier.fillMaxSize(),
                 show = show,
                 onHideInfo = {},
+                isPlayingLambda = { true },
+                isShowDanmakuLambda = { true },
+                isLikedLambda = { false }
             )
         }
     }

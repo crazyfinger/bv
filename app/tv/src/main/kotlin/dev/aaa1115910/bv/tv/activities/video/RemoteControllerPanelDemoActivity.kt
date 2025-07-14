@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import dev.aaa1115910.bv.tv.component.RemoteControlPanelDemo
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
+import dev.aaa1115910.bv.tv.component.RemoteControlPanelDemo
 import dev.aaa1115910.bv.ui.theme.BVTheme
 import dev.aaa1115910.bv.util.Prefs
 
@@ -31,7 +31,8 @@ class RemoteControllerPanelDemoActivity : ComponentActivity() {
             isVerticalVideo: Boolean = false,
             proxyArea: ProxyArea = ProxyArea.MainLand,
             playerIconIdle: String = "",
-            playerIconMoving: String = ""
+            playerIconMoving: String = "",
+            isLiked: Boolean = false,
         ) {
             context.startActivity(
                 Intent(context, RemoteControllerPanelDemoActivity::class.java).apply {
@@ -48,6 +49,7 @@ class RemoteControllerPanelDemoActivity : ComponentActivity() {
                     putExtra("proxy_area", proxyArea.ordinal)
                     putExtra("playerIconIdle", playerIconIdle)
                     putExtra("playerIconMoving", playerIconMoving)
+                    putExtra("isLiked", isLiked)
                 }
             )
         }
@@ -86,7 +88,8 @@ fun RemoteControllerPanelDemoScreen(
             isVerticalVideo = intent.getBooleanExtra("isVerticalVideo", false),
             proxyArea = ProxyArea.entries[intent.getIntExtra("proxy_area", 0)],
             playerIconIdle = intent.getStringExtra("playerIconIdle") ?: "",
-            playerIconMoving = intent.getStringExtra("playerIconMoving") ?: ""
+            playerIconMoving = intent.getStringExtra("playerIconMoving") ?: "",
+            isLiked = intent.getBooleanExtra("isLiked", false)
         )
         context.finish()
     }

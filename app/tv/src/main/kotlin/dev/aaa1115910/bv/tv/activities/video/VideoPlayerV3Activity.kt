@@ -37,7 +37,8 @@ class VideoPlayerV3Activity : ComponentActivity() {
             isVerticalVideo: Boolean = false,
             proxyArea: ProxyArea = ProxyArea.MainLand,
             playerIconIdle: String = "",
-            playerIconMoving: String = ""
+            playerIconMoving: String = "",
+            isLiked: Boolean,
         ) {
             context.startActivity(
                 Intent(
@@ -57,6 +58,7 @@ class VideoPlayerV3Activity : ComponentActivity() {
                     putExtra("proxy_area", proxyArea.ordinal)
                     putExtra("playerIconIdle", playerIconIdle)
                     putExtra("playerIconMoving", playerIconMoving)
+                    putExtra("isLiked", isLiked)
                 }
             )
         }
@@ -129,6 +131,7 @@ class VideoPlayerV3Activity : ComponentActivity() {
             val proxyArea = ProxyArea.entries[intent.getIntExtra("proxy_area", 0)]
             val playerIconIdle = intent.getStringExtra("playerIconIdle") ?: ""
             val playerIconMoving = intent.getStringExtra("playerIconMoving") ?: ""
+            val isLiked = intent.getBooleanExtra("isLiked", false)
             dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity.Companion.logger.fInfo { "Launch parameter: [aid=$aid, cid=$cid]" }
             playerViewModel.apply {
                 loadPlayUrl(
@@ -147,6 +150,7 @@ class VideoPlayerV3Activity : ComponentActivity() {
                 this.proxyArea = proxyArea
                 this.playerIconIdle = playerIconIdle
                 this.playerIconMoving = playerIconMoving
+                this.isLiked = isLiked
             }
         } else {
             dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity.Companion.logger.fInfo { "Null launch parameter" }

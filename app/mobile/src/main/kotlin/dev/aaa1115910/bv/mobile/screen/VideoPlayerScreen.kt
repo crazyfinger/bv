@@ -234,6 +234,7 @@ fun VideoPlayerScreen(
                             codec = playerViewModel.currentVideoCodec.name,
                             title = playerViewModel.title,
                             partTitle = playerViewModel.partTitle,
+                            isLiked = playerViewModel.isLiked,
                         ),
                         LocalVideoPlayerLogsData provides VideoPlayerLogsData(
                             logs = playerViewModel.logs

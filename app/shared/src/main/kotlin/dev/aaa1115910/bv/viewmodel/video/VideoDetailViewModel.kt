@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import dev.aaa1115910.biliapi.entity.video.VideoDetail
+import dev.aaa1115910.biliapi.http.entity.video.OneClickTripleAction
+import dev.aaa1115910.biliapi.repositories.CoinRepository
+import dev.aaa1115910.biliapi.repositories.LikeRepository
 import dev.aaa1115910.biliapi.repositories.VideoDetailRepository
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
 import dev.aaa1115910.bv.player.entity.VideoListItem
@@ -24,7 +27,9 @@ import org.koin.android.annotation.KoinViewModel
 @KoinViewModel
 class VideoDetailViewModel(
     private val videoDetailRepository: VideoDetailRepository,
-    private val videoInfoRepository: VideoInfoRepository
+    private val videoInfoRepository: VideoInfoRepository,
+    private val likeRepository: LikeRepository,
+    private val coinRepository: CoinRepository,
 ) : ViewModel() {
     private val logger = KotlinLogging.logger { }
     var state by mutableStateOf(VideoInfoState.Loading)
@@ -142,6 +147,75 @@ class VideoDetailViewModel(
         }
         videoInfoRepository.videoList.clear()
         videoInfoRepository.videoList.addAll(partVideoList)
+    }
+
+    suspend fun addVideoLike(): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                require(videoDetail?.aid != null) { "Video info is null" }
+                logger.info { "Update video av${videoDetail?.aid} to liked" }
+
+                likeRepository.addVideoLike(
+                    aid = videoDetail!!.aid,
+                    Prefs.apiType,
+                )
+            }.onFailure {
+                logger.fInfo { "Update video liked status failed" }
+            }.onSuccess {
+                logger.fInfo { "Update video liked status success" }
+            }.isSuccess // 返回成功与否
+        }
+    }
+
+    suspend fun delVideoLike(): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                require(videoDetail?.aid != null) { "Video info is null" }
+                logger.info { "Delete video av${videoDetail?.aid} liked status" }
+
+                likeRepository.delVideoLike(
+                    aid = videoDetail!!.aid,
+                )
+            }.onFailure {
+                logger.fInfo { "Delete video liked status failed" }
+            }.onSuccess {
+                logger.fInfo { "Delete video liked status success" }
+            }.isSuccess
+        }
+    }
+
+    suspend fun addVideoCoin(): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                require(videoDetail?.aid != null) { "Video info is null" }
+                logger.info { "Update video av${videoDetail?.aid} to coin" }
+
+                coinRepository.addVideoCoin(
+                    aid = videoDetail!!.aid,
+                )
+            }.onFailure {
+                logger.fInfo { "Update video coin status failed" }
+            }.onSuccess {
+                logger.fInfo { "Update video coin status success" }
+            }.isSuccess
+        }
+    }
+
+    suspend fun sendVideoOneClickTripleAction(onDataUpdated: (data: OneClickTripleAction) -> Unit): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val data =
+                    likeRepository.sendVideoOneClickTripleAction(
+                        aid = videoDetail!!.aid,
+                        bvid = videoDetail!!.bvid
+                    )
+                data?.let { onDataUpdated(it) }
+            }.onFailure { throwable ->
+                logger.fInfo { "Send video one click triple action failed: ${throwable.stackTraceToString()}" }
+            }.onSuccess {
+                logger.fInfo { "Send video one click triple action success" }
+            }.isSuccess
+        }
     }
 }
 

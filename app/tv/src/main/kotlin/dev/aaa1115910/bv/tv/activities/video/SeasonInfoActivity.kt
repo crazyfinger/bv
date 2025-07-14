@@ -15,6 +15,7 @@ class SeasonInfoActivity : ComponentActivity() {
             context: Context,
             epId: Int? = null,
             seasonId: Int? = null,
+            isLiked: Boolean = false,
             proxyArea: ProxyArea = ProxyArea.MainLand
         ) {
             context.startActivity(

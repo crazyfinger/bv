@@ -25,6 +25,7 @@ import dev.aaa1115910.biliapi.entity.video.SubtitleAiType
 import dev.aaa1115910.biliapi.entity.video.SubtitleType
 import dev.aaa1115910.biliapi.entity.video.VideoShot
 import dev.aaa1115910.biliapi.http.BiliHttpApi
+import dev.aaa1115910.biliapi.repositories.LikeRepository
 import dev.aaa1115910.biliapi.repositories.VideoPlayRepository
 import dev.aaa1115910.bilisubtitle.SubtitleParser
 import dev.aaa1115910.bilisubtitle.entity.SubtitleItem
@@ -59,6 +60,7 @@ import java.net.URI
 class VideoPlayerV3ViewModel(
     private val videoInfoRepository: VideoInfoRepository,
     private val videoPlayRepository: VideoPlayRepository,
+    private val likeRepository: LikeRepository,
 ) : ViewModel() {
     private val logger = KotlinLogging.logger { }
 
@@ -120,6 +122,7 @@ class VideoPlayerV3ViewModel(
 
     var playerIconIdle by mutableStateOf("")
     var playerIconMoving by mutableStateOf("")
+    var isLiked by mutableStateOf(false)
 
     private var currentAid = 0L
     var currentCid by mutableLongStateOf(0L)
@@ -630,6 +633,48 @@ class VideoPlayerV3ViewModel(
             logger.fInfo { "Load video shot success" }
         }.onFailure {
             logger.fWarn { "Load video shot failed: ${it.stackTraceToString()}" }
+        }
+    }
+
+    suspend fun addVideoLike(): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                logger.info { "Update video av${currentAid} to liked" }
+                likeRepository.addVideoLike(currentAid, Prefs.apiType)
+            }.onFailure {
+                logger.fInfo { "Update video liked status failed" }
+            }.onSuccess {
+                logger.fInfo { "Update video liked status success" }
+            }.isSuccess // 返回成功与否
+        }
+    }
+
+    suspend fun delVideoLike(): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                logger.info { "Delete video av${currentAid} liked status" }
+
+                likeRepository.delVideoLike(
+                    aid = currentAid,
+                )
+            }.onFailure {
+                logger.fInfo { "Delete video liked status failed" }
+            }.onSuccess {
+                logger.fInfo { "Delete video liked status success" }
+            }.isSuccess
+        }
+    }
+
+    suspend fun sendVideoOneClickTripleAction(aid: Long, bvid: String? = null): Boolean {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                logger.info { "Update video av${aid} to liked" }
+                likeRepository.sendVideoOneClickTripleAction(aid, bvid)
+            }.onFailure {
+                logger.fInfo { "Update video liked status failed" }
+            }.onSuccess {
+                logger.fInfo { "Update video liked status success" }
+            }.isSuccess // 返回成功与否
         }
     }
 }

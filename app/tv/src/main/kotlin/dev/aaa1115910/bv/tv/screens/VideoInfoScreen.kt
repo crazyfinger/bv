@@ -114,9 +114,7 @@ import dev.aaa1115910.biliapi.entity.video.VideoDetail
 import dev.aaa1115910.biliapi.entity.video.VideoPage
 import dev.aaa1115910.biliapi.entity.video.season.Episode
 import dev.aaa1115910.biliapi.http.BiliPlusHttpApi
-import dev.aaa1115910.biliapi.repositories.CoinRepository
 import dev.aaa1115910.biliapi.repositories.FavoriteRepository
-import dev.aaa1115910.biliapi.repositories.LikeRepository
 import dev.aaa1115910.biliapi.repositories.UserRepository
 import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
@@ -168,8 +166,6 @@ fun VideoInfoScreen(
     videoDetailViewModel: VideoDetailViewModel = koinViewModel(),
     userRepository: UserRepository = getKoin().get(),
     favoriteRepository: FavoriteRepository = getKoin().get(),
-    likeRepository: LikeRepository = getKoin().get(),
-    coinRepository: CoinRepository = getKoin().get(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -364,60 +360,10 @@ fun VideoInfoScreen(
         liked = videoDetailViewModel.videoDetail?.userActions?.like ?: false
     }
 
-    val addVideoLike: () -> Unit = {  ->
-        scope.launch(Dispatchers.IO) {
-            runCatching {
-                require(videoDetailViewModel.videoDetail?.aid != null) { "Video info is null" }
-                logger.info { "Update video av${videoDetailViewModel.videoDetail?.aid} to liked" }
-
-                likeRepository.addVideoLike(
-                    aid = videoDetailViewModel.videoDetail!!.aid,
-                )
-            }.onFailure {
-                logger.fInfo { "Update video liked status failed" }
-            }.onSuccess {
-                logger.fInfo { "Update video liked status success" }
-            }
-        }
-    }
-    val delVideoLike: () -> Unit = {  ->
-        scope.launch(Dispatchers.IO) {
-            runCatching {
-                require(videoDetailViewModel.videoDetail?.aid != null) { "Video info is null" }
-                logger.info { "Delete video av${videoDetailViewModel.videoDetail?.aid} liked status" }
-
-                likeRepository.delVideoLike(
-                    aid = videoDetailViewModel.videoDetail!!.aid,
-                )
-            }.onFailure {
-                logger.fInfo { "Delete video liked status failed" }
-            }.onSuccess {
-                logger.fInfo { "Delete video liked status success" }
-            }
-        }
-    }
-
     var isCoin by remember { mutableStateOf(false) }
 
     val updateVideoIsCoin = {
         isCoin = videoDetailViewModel.videoDetail?.userActions?.coin ?: false
-    }
-
-    val addVideoCoin: () -> Unit = {  ->
-        scope.launch(Dispatchers.IO) {
-            runCatching {
-                require(videoDetailViewModel.videoDetail?.aid != null) { "Video info is null" }
-                logger.info { "Update video av${videoDetailViewModel.videoDetail?.aid} to coin" }
-
-                coinRepository.addVideoCoin(
-                    aid = videoDetailViewModel.videoDetail!!.aid,
-                )
-            }.onFailure {
-                logger.fInfo { "Update video coin status failed" }
-            }.onSuccess {
-                logger.fInfo { "Update video coin status success" }
-            }
-        }
     }
 
     LaunchedEffect(Unit) {
@@ -468,7 +414,8 @@ fun VideoInfoScreen(
                             playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                 ?: "",
                             playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
-                                ?: ""
+                                ?: "",
+                            isLiked = liked
                         )
                         context.finish()
                     }
@@ -664,7 +611,8 @@ fun VideoInfoScreen(
                                     playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                         ?: "",
                                     playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
-                                        ?: ""
+                                        ?: "",
+                                    isLiked = liked,
                                 )
                             },
                             onClickUp = {
@@ -708,25 +656,56 @@ fun VideoInfoScreen(
                             },
                             isLike = liked,
                             onAddLike = {
-                                if (!liked) {
-                                    addVideoLike()
-                                    liked = true
-                                    "点赞成功".toast(context)
+                                scope.launch {
+                                    if (!liked) {
+                                        if (videoDetailViewModel.addVideoLike()) {
+                                            liked = true
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.zan_success).toast(context)
+                                        } else {
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.zan_failed).toast(context)
+                                        }
+                                    }
                                 }
                             },
                             onDelLike = {
-                                if (liked) {
-                                    delVideoLike()
-                                    liked = false
-                                    "已取消点赞".toast(context)
+                                scope.launch {
+                                    if (liked) {
+                                        if (videoDetailViewModel.delVideoLike()) {
+                                            liked = false
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.cancel_zan_success).toast(context)
+                                        } else {
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.cancel_zan_failed).toast(context)
+                                        }
+                                    }
                                 }
                             },
                             isCoin = isCoin,
                             onAddCoin = {
-                                if (!isCoin) {
-                                    addVideoCoin()
-                                    isCoin = true
-                                    "投币成功".toast(context)
+                                scope.launch {
+                                    if (!isCoin) {
+                                        if (videoDetailViewModel.addVideoCoin()) {
+                                            isCoin = true
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.give_coin_success).toast(context)
+                                        } else {
+                                            context.getString(dev.aaa1115910.bv.tv.R.string.give_coin_failed).toast(context)
+                                        }
+                                    }
+                                }
+                            },
+                            onSendVideoOneClickTripleAction = {
+                                scope.launch {
+                                    if (videoDetailViewModel.sendVideoOneClickTripleAction({ data ->
+                                            liked = data.like
+                                            isCoin = data.coin
+                                            favorited = data.fav
+                                            if (favorited) addVideoToDefaultFavoriteFolder()
+                                        })) {
+                                        context.getString(dev.aaa1115910.bv.tv.R.string.one_click_triple_success)
+                                            .toast(context)
+                                    } else {
+                                        context.getString(dev.aaa1115910.bv.tv.R.string.one_click_tripple_failed)
+                                            .toast(context)
+                                    }
                                 }
                             },
                             onShowDescription = {
@@ -764,7 +743,8 @@ fun VideoInfoScreen(
                                         playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                             ?: "",
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
-                                            ?: ""
+                                            ?: "",
+                                        isLiked = liked,
                                     )
                                 }
                             )
@@ -792,7 +772,8 @@ fun VideoInfoScreen(
                                         playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                             ?: "",
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
-                                            ?: ""
+                                            ?: "",
+                                        isLiked = liked,
                                     )
                                 },
                                 onClickEpPart = { episode, cid ->
@@ -809,7 +790,8 @@ fun VideoInfoScreen(
                                         playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                             ?: "",
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
-                                            ?: ""
+                                            ?: "",
+                                        isLiked = liked,
                                     )
                                 }
                             )
@@ -903,6 +885,7 @@ fun VideoInfoData(
     onDelLike: () -> Unit = {},
     isCoin: Boolean = false,
     onAddCoin: () -> Unit = {},
+    onSendVideoOneClickTripleAction: () -> Unit,
     onShowDescription: () -> Unit = {}
 ) {
     val localDensity = LocalDensity.current
@@ -1021,7 +1004,8 @@ fun VideoInfoData(
                                 } else {
                                     onAddLike()
                                 }
-                            }
+                            },
+                            onLongClick = { onSendVideoOneClickTripleAction() }
                         )
                         FavoriteButton(
                             modifier = Modifier

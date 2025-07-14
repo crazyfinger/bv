@@ -99,6 +99,9 @@ fun BvPlayer(
     onSubtitleSizeChange: (TextUnit) -> Unit,
     onSubtitleBackgroundOpacityChange: (Float) -> Unit,
     onSubtitleBottomPadding: (Dp) -> Unit,
+    onToggleDanmaku: (Boolean) -> Unit,
+    onToggleLike: ((Boolean) -> Unit) -> Unit,
+    onLongClickLike: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val logger = KotlinLogging.logger("BvPlayer")
@@ -122,6 +125,9 @@ fun BvPlayer(
     var isBuffering by remember { mutableStateOf(false) }
     var exception by remember { mutableStateOf<Exception?>(null) }
     //var proxyArea by remember { mutableStateOf(ProxyArea.MainLand) }
+
+    var isShowDanmaku by rememberSaveable { mutableStateOf(videoPlayerConfigData.currentDanmakuEnabled) }
+    var isLiked by rememberSaveable { mutableStateOf(videoPlayerVideoInfoData.isLiked) }
 
     val typeFilter by remember { mutableStateOf(TypeFilter()) }
     var danmakuConfig by remember { mutableStateOf(DanmakuConfig()) }
@@ -651,6 +657,20 @@ fun BvPlayer(
                 onSubtitleBottomPadding(padding)
             },
             onRequestFocus = { focusRequester.requestFocus() },
+            isShowDanmakuLambda = { isShowDanmaku },
+            isLikedLambda = { isLiked },
+            onToggleDanmaku = {
+                logger.info { "On danmaku toggle" }
+                onToggleDanmaku(!isShowDanmaku)
+            },
+            onToggleLike = {
+                onToggleLike {
+                    isLiked = it
+                }
+            },
+            onLongClickLike = {
+                onLongClickLike()
+            },
         ) {
             LaunchedEffect(Unit) {
                 videoPlayer.setOptions()
@@ -669,7 +689,7 @@ fun BvPlayer(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .fillMaxHeight(videoPlayerConfigData.currentDanmakuArea)
+                    .fillMaxHeight(if (isShowDanmaku) videoPlayerConfigData.currentDanmakuArea else 0f)
                     .fillMaxHeight()
                     .alpha(videoPlayerConfigData.currentDanmakuOpacity)
                     .ifElse(

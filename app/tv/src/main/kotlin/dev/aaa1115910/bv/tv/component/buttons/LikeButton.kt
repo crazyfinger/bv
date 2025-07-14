@@ -1,6 +1,8 @@
 package dev.aaa1115910.bv.tv.component.buttons
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ThumbUp
@@ -24,10 +26,12 @@ fun LikeButton(
     modifier: Modifier = Modifier,
     isLike: Boolean,
     onToggleLike: () -> Unit = {},
+    onLongClick: () -> Unit = {},
 ) {
     Button(
         modifier = modifier,
         onClick = {onToggleLike()},
+        onLongClick = { onLongClick() },
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp), // 减小内边距
         shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp)), // 设置为小圆角
     ) {

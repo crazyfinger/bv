@@ -27,8 +27,10 @@ import dev.aaa1115910.bv.player.entity.VideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoShotData
 import dev.aaa1115910.bv.player.tv.BvPlayer
+import dev.aaa1115910.bv.tv.R
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.swapList
+import dev.aaa1115910.bv.util.toast
 import dev.aaa1115910.bv.viewmodel.VideoPlayerV3ViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +57,7 @@ fun VideoPlayerV3Screen(
             codec = playerViewModel.currentVideoCodec.name,
             title = playerViewModel.title,
             partTitle = playerViewModel.partTitle,
+            isLiked = playerViewModel.isLiked,
         ),
         LocalVideoPlayerLogsData provides VideoPlayerLogsData(
             logs = playerViewModel.logs
@@ -218,6 +221,39 @@ fun VideoPlayerV3Screen(
             onSubtitleBottomPadding = { padding ->
                 Prefs.defaultSubtitleBottomPadding = padding
                 playerViewModel.currentSubtitleBottomPadding = padding
+            },
+            onToggleDanmaku = { enabled ->
+                playerViewModel.currentDanmakuEnabled = enabled
+                Prefs.defaultDanmakuEnabled = enabled
+            },
+            onToggleLike = { onChanged ->
+                logger.info { "on toggle like ${playerViewModel.isLiked}" }
+                scope.launch {
+                    if (!playerViewModel.isLiked) {
+                        if (playerViewModel.addVideoLike()) {
+                            playerViewModel.isLiked = true
+                            onChanged(true)
+                            context.getString(R.string.zan_success)
+                                .toast(context)
+                        } else {
+                            context.getString(R.string.zan_failed)
+                                .toast(context)
+                        }
+                    } else {
+                        if (playerViewModel.delVideoLike()) {
+                            playerViewModel.isLiked = false
+                            onChanged(false)
+                            context.getString(R.string.cancel_zan_success)
+                                .toast(context)
+                        } else {
+                            context.getString(R.string.cancel_zan_failed)
+                                .toast(context)
+                        }
+                    }
+                }
+            },
+            onLongClickLike = {
+                context.getString(R.string.still_working).toast(context)
             },
         )
     }

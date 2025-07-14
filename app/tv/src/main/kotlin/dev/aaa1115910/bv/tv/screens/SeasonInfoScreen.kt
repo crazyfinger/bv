@@ -152,7 +152,8 @@ fun SeasonInfoScreen(
                     seasonId = seasonViewModel.seasonData?.seasonId,
                     proxyArea = seasonViewModel.proxyArea,
                     playerIconIdle = seasonViewModel.seasonData?.playerIcon?.idle ?: "",
-                    playerIconMoving = seasonViewModel.seasonData?.playerIcon?.moving ?: ""
+                    playerIconMoving = seasonViewModel.seasonData?.playerIcon?.moving ?: "",
+                    isLiked = seasonViewModel.isLiked,
                 )
             } else {
                 //如果 cid==0，就需要跳转回 VideoInfoActivity 去获取 cid 再跳转播放器
@@ -178,12 +179,14 @@ fun SeasonInfoScreen(
         val epId = intent.getIntExtra("epid", 0)
         val seasonId = intent.getIntExtra("seasonid", 0)
         val proxyAreaIndex = intent.getIntExtra("proxy_area", 0)
+        val isLiked = intent.getBooleanExtra("isLiked", false)
         val proxyArea = ProxyArea.entries[proxyAreaIndex]
         logger.fInfo { "Read extras from content: [epId=$epId, seasonId=$seasonId, proxyArea=$proxyArea]" }
 
         seasonViewModel.epId = epId
         seasonViewModel.seasonId = seasonId
         seasonViewModel.proxyArea = proxyArea
+        seasonViewModel.isLiked= isLiked
 
         if (seasonViewModel.epId != null || seasonViewModel.seasonId != null) {
             scope.launch(Dispatchers.IO) {

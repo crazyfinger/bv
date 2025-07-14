@@ -41,6 +41,7 @@ class SeasonViewModel(
     var seasonData by mutableStateOf<SeasonDetail?>(null)
 
     var isFollowing by mutableStateOf(false)
+    var isLiked by mutableStateOf(false)
     var lastPlayProgress by mutableStateOf<SeasonDetail.UserStatus.Progress?>(null)
 
     var tip by mutableStateOf("Loading")
