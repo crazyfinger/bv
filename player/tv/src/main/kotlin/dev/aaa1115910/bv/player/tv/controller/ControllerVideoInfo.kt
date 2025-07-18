@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
@@ -47,7 +44,6 @@ import dev.aaa1115910.bv.player.entity.VideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.seekbar.SeekMoveState
 import dev.aaa1115910.bv.player.tv.VideoSeekBar
-import dev.aaa1115910.bv.util.formatHourMinSec
 
 @Composable
 fun ControllerVideoInfo(
@@ -94,15 +90,7 @@ fun ControllerVideoInfo(
     ) {
         AnimatedVisibility(
             modifier = modifier
-                .align(Alignment.TopEnd)
-                .clip(
-                    MaterialTheme.shapes.large.copy(
-                        topStart = CornerSize(0.dp),
-                        topEnd = CornerSize(0.dp)
-                    )
-                )
-                .background(Color.Black.copy(0.5f))
-                .padding(horizontal = 32.dp, vertical = 16.dp),
+                .align(Alignment.TopEnd),
             visible = show,
             enter = expandVertically(),
             exit = shrinkVertically(),
@@ -145,40 +133,38 @@ fun ControllerVideoInfo(
     }
 }
 
+/**
+ * 视频上方标题栏
+ */
 @Composable
 fun ControllerVideoInfoTop(
     modifier: Modifier = Modifier,
     title: String,
     clock: Triple<Int, Int, Int>
 ) {
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(
-                MaterialTheme.shapes.large
-                    .copy(topStart = CornerSize(0.dp), topEnd = CornerSize(0.dp))
-            )
-            .background(Color.Black.copy(0.5f))
-            .padding(horizontal = 32.dp, vertical = 16.dp),
+            .background(Color.Black.copy(0.4f))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 120.dp),
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Clock(
-                modifier = Modifier.align(Alignment.CenterEnd),
-                hour = clock.first,
-                minute = clock.second,
-                second = clock.third
-            )
-        }
+        Text(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Clock(
+            modifier = Modifier,
+            hour = clock.first,
+            minute = clock.second,
+            second = clock.third
+        )
     }
 }
 
@@ -206,40 +192,13 @@ fun ControllerVideoInfoBottom(
 //                MaterialTheme.shapes.large
 //                    .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
 //            )
-            .background(Color.Black.copy(0.5f)),
+            .background(Color.Black.copy(0.4f))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.Bottom
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-                .focusable(false),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.Bottom
-        ) {
-//            Text(
-//                modifier = Modifier
-//                    .padding(horizontal = 28.dp)
-//                    .fillMaxWidth(0.7f),
-//                text = partTitle,
-//                color = Color.White,
-//                maxLines = 1,
-//                overflow = TextOverflow.Ellipsis,
-//                style = MaterialTheme.typography.headlineSmall,
-////                style = MaterialTheme.typography.displaySmall.copy(
-////                    fontSize = (MaterialTheme.typography.displaySmall.fontSize.value - 10).sp
-////                ),
-//            )
-            Text(
-                modifier = Modifier.padding(top = 16.dp, bottom = 0.dp, end = 32.dp),
-                text = "${seekData.position.formatHourMinSec()} / ${seekData.duration.formatHourMinSec()}",
-                color = Color.White
-            )
-        }
         VideoSeekBar(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .fillMaxWidth(),
             duration = seekData.duration,
             position = seekData.position,
             bufferedPercentage = seekData.bufferedPercentage,
@@ -249,8 +208,7 @@ fun ControllerVideoInfoBottom(
         )
         VideoBottomController(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .fillMaxWidth(),
             seekData = seekData,
             isPlayingLambda = isPlayingLambda,
             isShowDanmakuLambda = isShowDanmakuLambda,

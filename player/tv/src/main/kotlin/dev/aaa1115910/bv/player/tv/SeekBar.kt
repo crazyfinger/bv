@@ -75,9 +75,9 @@ private fun VideoSeekBar(
                     .constrainAs(seek) {
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom, 16.dp)
+                        bottom.linkTo(parent.bottom, 12.dp)
                     }
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 12.dp),
                 duration = duration,
                 position = position,
                 bufferedPercentage = bufferedPercentage,
@@ -88,7 +88,7 @@ private fun VideoSeekBar(
                     .constrainAs(thumbIcon) {
                         start.linkTo(
                             parent.start,
-                            (width - 48.dp) * (position / max(duration.toFloat(), 1f))
+                            (width - 40.dp) * (position / max(duration.toFloat(), 1f))
                         )
                         bottom.linkTo(seek.bottom)
                         top.linkTo(seek.top)

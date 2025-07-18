@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -88,17 +86,13 @@ private fun SeekController(
 
         Column(
             modifier = Modifier
-                .clip(
-                    MaterialTheme.shapes.large
-                        .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
-                )
                 .background(Color.Black.copy(0.5f)),
             verticalArrangement = Arrangement.Bottom
         ) {
             VideoSeekBar(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 20.dp)
                     .padding(top = 8.dp),
                 duration = duration,
                 position = position,
