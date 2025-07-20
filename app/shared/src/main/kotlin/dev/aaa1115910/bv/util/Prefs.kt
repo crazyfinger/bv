@@ -162,6 +162,9 @@ object Prefs {
             dsm.editPreference(PrefKeys.prefEnabledFirebaseCollectionKey, value)
         }
 
+    /**
+     * 隐身模式
+     */
     var incognitoMode: Boolean
         get() = runBlocking { dsm.getPreferenceFlow(PrefKeys.prefIncognitoModeRequest).first() }
         set(value) = runBlocking { dsm.editPreference(PrefKeys.prefIncognitoModeKey, value) }

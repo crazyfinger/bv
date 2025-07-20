@@ -96,9 +96,13 @@ fun VideoPlayerController(
     val videoPlayerDebugInfoData = LocalVideoPlayerDebugInfoData.current
     val logger = KotlinLogging.logger {}
 
+    //播放列表
     var showListController by remember { mutableStateOf(false) }
+    //菜单控制栏
     var showMenuController by remember { mutableStateOf(false) }
+    //进度条
     var showSeekController by remember { mutableStateOf(false) }
+    //是否显示底部控制栏
     var showInfo by remember { mutableStateOf(false) }
     val showClickableControllers by remember { derivedStateOf { showListController || showMenuController } }
 
@@ -283,7 +287,7 @@ fun VideoPlayerController(
                         } else {
                             // Info已显示且有焦点，切换显示状态
                             infoHasFocus = false
-                            hideVideoInfoTimer = countDownTimer(3000, 1000, "hideVideoInfoTimer") {
+                            hideVideoInfoTimer = countDownTimer(5000, 1000, "hideVideoInfoTimer") {
                                 showInfo = false
                             }
                         }
@@ -355,32 +359,19 @@ fun VideoPlayerController(
                         return@onPreviewKeyEvent true
                     }
 
-                    Key.MediaFastForward -> {
+                    //快进
+                    Key.MediaFastForward, Key.DirectionRight -> {
                         if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
                         openSeekController()
                         onTimeForward()
                     }
 
-                    Key.MediaRewind -> {
+                    Key.MediaRewind, Key.DirectionLeft -> {
                         if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
                         openSeekController()
                         onTimeBack()
-                    }
-
-                    Key.DirectionLeft -> {
-                        if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                        logger.info { "[${it.key} press]" }
-                        openSeekController()
-                        onTimeBack()
-                    }
-
-                    Key.DirectionRight -> {
-                        if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
-                        logger.info { "[${it.key} press]" }
-                        openSeekController()
-                        onTimeForward()
                     }
                 }
 
