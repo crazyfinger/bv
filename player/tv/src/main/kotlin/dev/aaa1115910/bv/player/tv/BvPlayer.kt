@@ -252,6 +252,15 @@ fun BvPlayer(
         updateVideoAspectRatio()
     }
 
+    LaunchedEffect(isShowDanmaku) {
+        if (!isShowDanmaku) {
+            mDanmakuPlayer?.pause()
+        } else if (isPlaying) {
+            mDanmakuPlayer?.start()
+            mDanmakuPlayer?.seekTo(videoPlayer.currentPosition)
+        }
+    }
+
     val updateBackToHistory: () -> Unit = {
         // 此处使用 videoPlayerHistoryData.lastPlayed 无法获取到新值
         //if (videoPlayerHistoryData.lastPlayed > 0 && hideBackToHistoryTimer == null) {
@@ -661,7 +670,8 @@ fun BvPlayer(
             isLikedLambda = { isLiked },
             onToggleDanmaku = {
                 logger.info { "On danmaku toggle" }
-                onToggleDanmaku(!isShowDanmaku)
+                isShowDanmaku = !isShowDanmaku
+                onToggleDanmaku(isShowDanmaku)
             },
             onToggleLike = {
                 onToggleLike {
