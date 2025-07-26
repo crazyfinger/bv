@@ -1,10 +1,12 @@
 package dev.aaa1115910.bv.tv.component.buttons
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Paid
 import androidx.compose.material.icons.outlined.Paid
+import androidx.compose.material.icons.rounded.Paid
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +30,7 @@ fun CoinButton(
     Button(
         modifier = modifier,
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp), // 减小内边距
-        shape = ButtonDefaults.shape(shape = RoundedCornerShape(4.dp)), // 设置为小圆角4.dp
+        shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp)), // 设置为小圆角4.dp
         onClick = {onAddCoin()}
     ) {
         Row(
