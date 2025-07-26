@@ -70,6 +70,8 @@ class ToViewViewModel(
                         avid = ToViewItem.oid,
                         title = ToViewItem.title,
                         cover = ToViewItem.cover,
+                        play = ToViewItem.play,
+                        // danmaku = ToViewItem.danmaku, // 视频时长>1小时时 显示不全，所以不显示弹幕数
                         upName = ToViewItem.author,
                         timeString = if (ToViewItem.progress == -1) context.getString(R.string.play_time_finish)
                         else context.getString(
