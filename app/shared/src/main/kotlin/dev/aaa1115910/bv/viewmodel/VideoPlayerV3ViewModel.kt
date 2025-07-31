@@ -40,6 +40,7 @@ import dev.aaa1115910.bv.player.entity.VideoAspectRatio
 import dev.aaa1115910.bv.player.entity.VideoCodec
 import dev.aaa1115910.bv.repository.VideoInfoRepository
 import dev.aaa1115910.bv.util.Prefs
+import dev.aaa1115910.bv.util.fError
 import dev.aaa1115910.bv.util.fException
 import dev.aaa1115910.bv.util.fInfo
 import dev.aaa1115910.bv.util.fWarn
@@ -327,7 +328,7 @@ class VideoPlayerV3ViewModel(
 
         val supportedCodec = playData!!.codec
         val codecList =
-            supportedCodec[currentQuality.code]!!.mapNotNull { VideoCodec.fromCodecString(it) }
+            supportedCodec[currentQuality.code]?.mapNotNull { VideoCodec.fromCodecString(it) } ?: emptyList()
 
         availableVideoCodec.swapListWithMainContext(codecList)
         logger.fInfo { "Video available codec: ${availableVideoCodec.toList()}" }
@@ -379,7 +380,13 @@ class VideoPlayerV3ViewModel(
                 }
             }
         }
-        var videoUrl = videoItem?.baseUrl ?: playData!!.dashVideos.first().baseUrl
+        var videoUrl = videoItem?.baseUrl ?: playData!!.dashVideos.firstOrNull()?.baseUrl
+        if (videoUrl == null) {
+            logger.fError { "Failed to get video URL" }
+            errorMessage = "获取视频地址失败"
+            loadState = RequestState.Failed
+            return
+        }
         val videoUrls = mutableListOf<String?>()
         videoUrls.add(videoItem?.baseUrl)
         videoUrls.addAll(videoItem?.backUrl ?: emptyList())
@@ -388,7 +395,13 @@ class VideoPlayerV3ViewModel(
             ?: playData!!.dolby.takeIf { it?.codecId == audio.code }
             ?: playData!!.flac.takeIf { it?.codecId == audio.code }
             ?: playData!!.dashAudios.minByOrNull { it.codecId }
-        var audioUrl = audioItem?.baseUrl ?: playData!!.dashAudios.first().baseUrl
+        var audioUrl = audioItem?.baseUrl ?: playData!!.dashAudios.firstOrNull()?.baseUrl
+        if (audioUrl == null) {
+            logger.fError { "Failed to get audio URL" }
+            errorMessage = "获取音频地址失败"
+            loadState = RequestState.Failed
+            return
+        }
         val audioUrls = mutableListOf<String?>()
         audioUrls.add(audioItem?.baseUrl)
         audioUrls.addAll(audioItem?.backUrl ?: emptyList())

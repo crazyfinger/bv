@@ -65,7 +65,7 @@ fun UISetting(
     val density by Prefs.densityFlow.collectAsState(context.resources.displayMetrics.widthPixels / 960f)
     val themeType by Prefs.themeTypeFlow.collectAsState(Prefs.themeType)
     var playerShowDebugInfo by remember { mutableStateOf(Prefs.playerShowDebugInfo) }
-
+    var showUGCVideoInfo by remember { mutableStateOf(Prefs.showUGCVideoInfo) }
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -104,6 +104,17 @@ fun UISetting(
                         onCheckedChange = {
                             playerShowDebugInfo = it
                             Prefs.playerShowDebugInfo = it
+                        }
+                    )
+                }
+                item {
+                    SettingSwitchListItem(
+                        title = stringResource(R.string.settings_show_ugc_video_info_title),
+                        supportText = stringResource(R.string.settings_show_ugc_video_info_text),
+                        checked = showUGCVideoInfo,
+                        onCheckedChange = {
+                            showUGCVideoInfo = it
+                            Prefs.showUGCVideoInfo = it
                         }
                     )
                 }

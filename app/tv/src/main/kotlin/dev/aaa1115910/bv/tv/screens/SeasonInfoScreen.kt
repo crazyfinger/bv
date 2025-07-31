@@ -265,8 +265,8 @@ fun SeasonInfoScreen(
                         newEpDesc = seasonViewModel.seasonData!!.newEpDesc,
                         description = seasonViewModel.seasonData!!.description,
                         lastPlayedIndex = seasonViewModel.lastPlayProgress?.lastEpId ?: -1,
-                        lastPlayedTitle = seasonViewModel.lastPlayProgress?.lastEpIndex
-                            ?: "Unknown",
+                        lastPlayedTitle = generateEpisodeTitle(seasonViewModel.seasonData?.episodes?.find { it.id == seasonViewModel.lastPlayProgress?.lastEpId },
+                            seasonViewModel.seasonData!!.title),
                         following = seasonViewModel.isFollowing,
                         isPublished = seasonViewModel.seasonData!!.publish.isPublished,
                         publishDate = seasonViewModel.seasonData!!.publish.publishDate,
@@ -321,13 +321,16 @@ fun SeasonInfoScreen(
                             }
 
                             logger.fInfo { "Play aid: $playAid, cid: $playCid" }
-
+                            val lastEpId = seasonViewModel.lastPlayProgress?.lastEpId
+                            val ep = seasonViewModel.seasonData?.episodes?.find {
+                                it.id == lastEpId
+                            } ?: seasonViewModel.seasonData?.episodes?.find { it.cid == playCid }
                             if (playCid != -1L) {
                                 onClickVideo(
                                     playAid,
                                     playCid,
                                     playEpid,
-                                    seasonViewModel.lastPlayProgress?.lastEpIndex ?: "",
+                                    generateEpisodeTitle(ep, seasonViewModel.seasonData!!.title),
                                     seasonViewModel.lastPlayProgress?.lastTime ?: 0
                                 )
 
@@ -434,6 +437,33 @@ fun SeasonInfoScreen(
             }
         }
     )
+}
+
+/**
+ * 生成剧集标题
+ * @param episode 剧集信息
+ * @param sectionTitle 所属章节标题
+ * @return 格式化后的剧集标题
+ */
+private fun generateEpisodeTitle(
+    episode: Episode?,
+    sectionTitle: String
+): String {
+    if(episode == null) return ""
+
+    return if (episode.longTitle.isNotEmpty()) {
+        runCatching {
+            "第 ${episode.title.toInt()} 集 "
+        }.getOrDefault("") + episode.longTitle
+    } else if (sectionTitle == "正片") {
+        //如果 title 是数字的话，就会返回 "第 x 集"
+        //如果 title 不是数字的话（例如 SP），就会原样使用 title
+        runCatching {
+            "第 ${episode.title.toInt()} 集"
+        }.getOrDefault(episode.title)
+    } else {
+        episode.title
+    }
 }
 
 @Composable
@@ -765,7 +795,7 @@ fun SeasonEpisodesDialog(
                             items = selectedEpisodes,
                             key = { _, episode -> episode.aid + episode.cid }
                         ) { index, episode ->
-                            val episodeTitle by remember { mutableStateOf(if (episode.longTitle != "") episode.longTitle else episode.title) }
+                            val episodeTitle by remember { mutableStateOf(generateEpisodeTitle(episode, title)) }
                             val buttonModifier =
                                 if (index == 0) Modifier.focusRequester(videoListFocusRequester) else Modifier
                             SeasonEpisodeButton(
@@ -789,7 +819,7 @@ fun SeasonEpisodesDialog(
                                         episode.aid,
                                         episode.cid,
                                         episode.id,
-                                        episode.longTitle,
+                                        generateEpisodeTitle(episode, title),
                                         if (episode.id == lastPlayedId) lastPlayedTime else 0
                                     )
                                 }
@@ -888,7 +918,7 @@ fun SeasonEpisodeRow(
                             episode.aid,
                             episode.cid,
                             episode.id,
-                            episode.longTitle,
+                            generateEpisodeTitle(episode, title),
                             if (episode.id == lastPlayedId) lastPlayedTime else 0
                         )
                     }

@@ -39,6 +39,7 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
 import androidx.tv.material3.Text
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekData
+import dev.aaa1115910.bv.util.formatHourMinSec
 import dev.aaa1115910.bv.util.formatMinSec
 
 /**
@@ -217,7 +218,7 @@ private fun TimeInfo(
 ) {
     Text(
         modifier = modifier.padding(top = 16.dp, bottom = 0.dp, end = 40.dp),
-        text = "${seekData.position.formatMinSec()} / ${seekData.duration.formatMinSec()}",
+        text = "${seekData.position.formatMinSec()} / ${seekData.duration.formatHourMinSec()}",
         color = Color.White
     )
 }

@@ -2,14 +2,12 @@ package dev.aaa1115910.bv.tv.screens
 
 import android.app.Activity
 import android.content.res.Configuration
-import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -187,6 +185,7 @@ fun VideoInfoScreen(
     var lastPlayedTime by remember { mutableIntStateOf(0) }
 
     var tip by remember { mutableStateOf("Loading") }
+    var showUGCVideoInfo by remember { mutableStateOf(Prefs.showUGCVideoInfo) }
     var fromSeason by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
     var proxyArea by remember { mutableStateOf(ProxyArea.MainLand) }
@@ -396,7 +395,7 @@ fun VideoInfoScreen(
                 }
 
                 runCatching {
-                    videoDetailViewModel.loadDetail(aid, fromSeason)
+                    videoDetailViewModel.loadDetail(aid, fromSeason, !showUGCVideoInfo)
                     updateVideoIsFavoured()
                     updateVideoIsLiked()
                     updateVideoIsCoin()
@@ -404,7 +403,7 @@ fun VideoInfoScreen(
                     if (Prefs.isLogin) fetchFavoriteData(aid)
 
                     //如果是从剧集跳转过来的，就直接播放 P1
-                    if (fromSeason) {
+                    if (fromSeason || !showUGCVideoInfo) {
                         val playPart = videoDetailViewModel.videoDetail!!.pages.first()
                         launchPlayerActivity(
                             context = context,
@@ -413,7 +412,7 @@ fun VideoInfoScreen(
                             title = videoDetailViewModel.videoDetail!!.title,
                             partTitle = videoDetailViewModel.videoDetail!!.pages.find { it.cid == playPart.cid }!!.title,
                             played = if (playPart.cid == lastPlayedCid) lastPlayedTime * 1000 else 0,
-                            fromSeason = true,
+                            fromSeason = fromSeason,
                             isVerticalVideo = containsVerticalScreenVideo,
                             playerIconIdle = videoDetailViewModel.videoDetail!!.playerIcon?.idle
                                 ?: "",
@@ -465,7 +464,7 @@ fun VideoInfoScreen(
 
     LaunchedEffect(videoDetailViewModel.videoDetail) {
         //如果是从剧集页跳转回来的，那就不需要再跳转到剧集页了
-        if (fromSeason) return@LaunchedEffect
+        if (fromSeason || !showUGCVideoInfo) return@LaunchedEffect
 
         videoDetailViewModel.videoDetail?.let {
             if (it.redirectToEp) {
@@ -506,7 +505,8 @@ fun VideoInfoScreen(
         }
     }
 
-    if (videoDetailViewModel.videoDetail == null || videoDetailViewModel.videoDetail?.redirectToEp == true || fromSeason) {
+    if (videoDetailViewModel.videoDetail == null || videoDetailViewModel.videoDetail?.redirectToEp == true ||
+        fromSeason || !showUGCVideoInfo) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -926,31 +926,23 @@ fun VideoInfoData(
             glow = ClickableSurfaceDefaults.glow(
                 focusedGlow = Glow(
                     elevationColor = MaterialTheme.colorScheme.inverseSurface,
-                    elevation = 16.dp
+                    elevation = 12.dp
                 )
             ),
-            border = if (Build.VERSION.SDK_INT < 28) {
-                ClickableSurfaceDefaults.border(
+            border = ClickableSurfaceDefaults.border(
                     focusedBorder = Border(
                         border = BorderStroke(
-                            width = 3.dp,
+                            width = 2.dp,
                             color = MaterialTheme.colorScheme.border
                         ),
                         shape = MaterialTheme.shapes.large
                     )
                 )
-            } else {
-                ClickableSurfaceDefaults.border()
-            }
         ) {
+            // 封面
             AsyncImage(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .border(
-                        width = if (coverHasFocus) 2.dp else 0.dp,
-                        color = if (coverHasFocus) Color.White else Color.Transparent,
-                        shape = MaterialTheme.shapes.large
-                    ),
+                    .fillMaxSize(),
 //                model = if (videoDetail.ugcSeason != null) videoDetail.ugcSeason!!.cover else videoDetail.cover,
                 model = videoDetail.cover,
                 contentDescription = null,

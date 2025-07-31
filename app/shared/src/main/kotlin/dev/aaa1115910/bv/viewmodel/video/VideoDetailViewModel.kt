@@ -37,13 +37,15 @@ class VideoDetailViewModel(
 
     var relatedVideos = mutableStateListOf<VideoCardData>()
 
-    suspend fun loadDetail(aid: Long, fromPgcSeason: Boolean = false) {
+    suspend fun loadDetail(aid: Long, fromPgcSeason: Boolean = false,
+                           withoutUserActions: Boolean = false) {
         logger.fInfo { "Load detail: [avid=$aid, preferApiType=${Prefs.apiType.name}]" }
         state = VideoInfoState.Loading
         runCatching {
             val videoDetailData = videoDetailRepository.getVideoDetail(
                 aid = aid,
-                preferApiType = Prefs.apiType
+                preferApiType = Prefs.apiType,
+                withoutUserActions = withoutUserActions,
             )
             withContext(Dispatchers.Main) { videoDetail = videoDetailData }
             if (!fromPgcSeason) updateVideoList(aid)
@@ -103,7 +105,8 @@ class VideoDetailViewModel(
                     VideoListPart(
                         aid = aid,
                         cid = videoPage.cid,
-                        title = videoPage.title,
+                        title = videoDetail!!.title,
+                        partTitle = videoPage.title,
                         index = index,
                     )
                 }
@@ -121,7 +124,8 @@ class VideoDetailViewModel(
                         VideoListUgcEpisode(
                             aid = episode.aid,
                             cid = videoPage.cid,
-                            title = videoPage.title,
+                            title = episode.title,
+                            partTitle = "",
                             index = epIndex
                         )
                     )
@@ -138,7 +142,8 @@ class VideoDetailViewModel(
                         VideoListPart(
                             aid = episode.aid,
                             cid = videoPage.cid,
-                            title = videoPage.title,
+                            title = episode.title,
+                            partTitle = videoPage.title,
                             index = pageIndex,
                         )
                     )
