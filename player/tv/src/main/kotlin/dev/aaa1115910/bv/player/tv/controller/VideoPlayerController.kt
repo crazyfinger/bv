@@ -1,13 +1,13 @@
 package dev.aaa1115910.bv.player.tv.controller
 
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
@@ -100,43 +99,18 @@ fun VideoPlayerController(
     var showListController by remember { mutableStateOf(false) }
     //菜单控制栏
     var showMenuController by remember { mutableStateOf(false) }
-    //进度条
-    var showSeekController by remember { mutableStateOf(false) }
     //是否显示底部控制栏
     var showInfo by remember { mutableStateOf(false) }
-    val showClickableControllers by remember { derivedStateOf { showListController || showMenuController } }
+    val showClickableControllers by remember { derivedStateOf { showListController || showMenuController || showInfo} }
 
     var lastPressBack by remember { mutableLongStateOf(0L) }
     var hasFocus by remember { mutableStateOf(false) }
 
     var goTime by remember { mutableLongStateOf(0L) }
+    var isSeeking by remember { mutableStateOf(false) }
     var seekChangeCount by remember { mutableIntStateOf(0) }
     var lastSeekChangeTime by remember { mutableLongStateOf(0L) }
     var moveState by remember { mutableStateOf(SeekMoveState.Idle) }
-
-    var hideVideoInfoTimer: CountDownTimer? by remember { mutableStateOf(null) }
-    var autoSeekConfirmTimer: CountDownTimer? by remember { mutableStateOf(null) }
-
-    val openSeekController = {
-        if (!showSeekController) goTime = videoPlayerSeekData.position
-        showSeekController = true
-    }
-
-    var infoHasFocus by remember { mutableStateOf(false) }
-    val controllerInfoFocusRequester = remember { FocusRequester() }
-
-    val resetAutoSeekConfirmTimer = {
-        autoSeekConfirmTimer?.cancel()
-        if (showSeekController) {
-            autoSeekConfirmTimer = countDownTimer(1000, 1000, "autoSeekConfirmTimer") {
-                if (showSeekController) {
-                    onGoTime(goTime)
-                    moveState = SeekMoveState.Idle
-                    showSeekController = false
-                }
-            }
-        }
-    }
 
     val calCoefficient = {
         if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
@@ -148,28 +122,55 @@ fun VideoPlayerController(
         }
     }
 
+    var onTimeForwardBackTimer: CountDownTimer? by remember { mutableStateOf(null) }
+    val onCancelSeek: () -> Unit = {
+        Log.d("TAG", "VideoPlayerController: cancel seek")
+        isSeeking = false
+        moveState = SeekMoveState.Idle
+        onTimeForwardBackTimer?.cancel()
+        onTimeForwardBackTimer = null
+    }
+    val onSeekGoTime = {
+        onGoTime(goTime)
+        if (!videoPlayer.isPlaying) onPlay()
+        onCancelSeek()
+    }
+    val startSeekTimer: () -> Unit = {
+        onTimeForwardBackTimer?.cancel()
+        onTimeForwardBackTimer = countDownTimer(3000, 100, "onTimeBackTimer") {
+            onSeekGoTime()
+        }
+    }
     val onTimeForward = {
+        isSeeking = true
         val targetTime = goTime + (10000 + calCoefficient() * 5000)
         goTime =
             if (targetTime > videoPlayerSeekData.duration) videoPlayerSeekData.duration else targetTime
         lastSeekChangeTime = System.currentTimeMillis()
         moveState = SeekMoveState.Forward
-        resetAutoSeekConfirmTimer()
         logger.info { "onTimeForward: [current=${videoPlayer.currentPosition}, goTime=$goTime]" }
     }
     val onTimeBack = {
+        isSeeking = true
         val targetTime = goTime - (10000 + calCoefficient() * 5000)
         goTime = if (targetTime < 0) 0 else targetTime
         lastSeekChangeTime = System.currentTimeMillis()
         moveState = SeekMoveState.Backward
-        resetAutoSeekConfirmTimer()
         logger.info { "onTimeBack: [current=${videoPlayer.currentPosition}, goTime=$goTime]" }
     }
-    // 处理焦点请求
-    LaunchedEffect(infoHasFocus, showInfo) {
-        if (infoHasFocus && showInfo) {
-            controllerInfoFocusRequester.requestFocus()
-        }
+
+    val onDirectionLeft = {
+        if (!isSeeking) goTime = videoPlayerSeekData.position
+        showInfo = true
+        onTimeBack()
+        startSeekTimer()
+    }
+
+    val onDirectionRight = {
+        if (!isSeeking) goTime = videoPlayerSeekData.position
+        showInfo = true
+        onTimeForward()
+        startSeekTimer()
     }
 
     Box(
@@ -179,14 +180,17 @@ fun VideoPlayerController(
             .focusable()
             //.ifElse(hasFocus, Modifier.border(2.dp, Color.Yellow))
             .onPreviewKeyEvent {
-
+                Log.d(
+                    "TAG",
+                    "VidePlayerController onKeyEvent type: ${it.type}, key: ${it.key}, showInfo:$showInfo"
+                )
                 if (showClickableControllers) {
                     if (listOf(Key.Back, Key.Menu).contains(it.key)) {
                         if (it.type == KeyEventType.KeyUp) {
                             logger.fInfo { "[${it.key}] hide all controllers" }
                             showMenuController = false
                             showListController = false
-                            showSeekController = false
+                            showInfo = false
                         }
                         onRequestFocus()
                         return@onPreviewKeyEvent true
@@ -194,56 +198,17 @@ fun VideoPlayerController(
                     return@onPreviewKeyEvent false
                 }
 
-                if (showSeekController) {
-                    if (listOf(
-                            Key.Back,
-                            Key.Menu,
-                            Key.DirectionDown,
-                            Key.DirectionUp
-                        ).contains(it.key)
-                    ) {
-                        if (it.type != KeyEventType.KeyDown) showSeekController = false
-                        onRequestFocus()
-                        return@onPreviewKeyEvent true
-                    }
-                }
-
-                // 当ControllerVideoInfo有焦点时，让它优先处理某些按键
-                if (infoHasFocus) {
-                    when (it.key) {
-                        Key.DirectionLeft, Key.DirectionRight, Key.DirectionCenter, Key.Enter -> {
-                            // 让VideoBottomController处理这些按键
-                            return@onPreviewKeyEvent false
-                        }
-
-                        Key.DirectionUp,
-                        Key.DirectionDown,
-                        Key.Back -> {
-                            if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                            // 返回键收起ControllerVideoInfo
-                            showInfo = false
-                            infoHasFocus = false
-                            onRequestFocus()
-                            return@onPreviewKeyEvent true
-                        }
-                    }
+                if (showInfo) {
+                    return@onPreviewKeyEvent false
                 }
 
                 when (it.key) {
                     Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
+                        Log.d("TAG", "VideoPlayerController key ${it.key} press: ")
                         @Suppress("KotlinConstantConditions")
                         if (!showClickableControllers && videoPlayerStateData.showBackToHistory) {
                             if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
                             onBackToHistory()
-                            return@onPreviewKeyEvent true
-                        }
-
-                        if (showSeekController) {
-                            if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                            onGoTime(goTime)
-                            if (!videoPlayer.isPlaying) onPlay()
-                            moveState = SeekMoveState.Idle
-                            showSeekController = false
                             return@onPreviewKeyEvent true
                         }
 
@@ -268,29 +233,15 @@ fun VideoPlayerController(
 
                     Key.DirectionUp -> {
                         if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                        logger.info { "[${it.key} press]" }
+                        logger.info { "DirectionUp press]" }
                         showListController = true
                         return@onPreviewKeyEvent true
                     }
 
                     Key.DirectionDown -> {
                         if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                        logger.info { "[${it.key} press]" }
-                        if (showInfo && !infoHasFocus) {
-                            // Info已显示但没有焦点，将焦点转移到Info
-                            infoHasFocus = true
-                        } else if (!showInfo) {
-                            // Info未显示，显示Info并转移焦点
-                            showInfo = true
-                            infoHasFocus = true
-                            hideVideoInfoTimer?.cancel()
-                        } else {
-                            // Info已显示且有焦点，切换显示状态
-                            infoHasFocus = false
-                            hideVideoInfoTimer = countDownTimer(5000, 1000, "hideVideoInfoTimer") {
-                                showInfo = false
-                            }
-                        }
+                        logger.info { "DirectionDown press]" }
+                        showInfo = true
                         return@onPreviewKeyEvent true
                     }
 
@@ -307,17 +258,11 @@ fun VideoPlayerController(
                         logger.info { "[${it.key} press]" }
 
                         // 有任何控制器显示中，先隐藏控制器
-                        if (showSeekController || showListController || showMenuController || showInfo) {
+                        if (showListController || showMenuController || showInfo) {
                             logger.fInfo { "隐藏控制器" }
-                            showSeekController = false
                             showListController = false
                             showMenuController = false
                             showInfo = false
-                            infoHasFocus = false
-                            if (hideVideoInfoTimer != null) {
-                                hideVideoInfoTimer?.cancel()
-                                hideVideoInfoTimer = null
-                            }
                             return@onPreviewKeyEvent true
                         }
 
@@ -363,15 +308,13 @@ fun VideoPlayerController(
                     Key.MediaFastForward, Key.DirectionRight -> {
                         if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
-                        openSeekController()
-                        onTimeForward()
+                        onDirectionRight()
                     }
 
                     Key.MediaRewind, Key.DirectionLeft -> {
                         if (it.type == KeyEventType.KeyUp) return@onPreviewKeyEvent true
                         logger.info { "[${it.key} press]" }
-                        openSeekController()
-                        onTimeBack()
+                        onDirectionLeft()
                     }
                 }
 
@@ -398,32 +341,38 @@ fun VideoPlayerController(
         PlayStateTips()
         ControllerVideoInfo(
             show = showInfo,
-            focusRequester = if (infoHasFocus) controllerInfoFocusRequester else null,
+            isSeeking = isSeeking,
+            goTime = goTime,
             onHideInfo = {
+                onCancelSeek()
                 showInfo = false
-                infoHasFocus = false
             },
             isPlayingLambda = { videoPlayer.isPlaying },
             isShowDanmakuLambda = isShowDanmakuLambda,
             onClickPlay = {
+                Log.d("TAG", "VideoPlayerController: onClickPlay")
                 if (videoPlayer.isPlaying) onPause() else onPlay()
             },
+            onDirectionLeft =  onDirectionLeft,
+            onDirectionRight =  onDirectionRight,
+            onCancelSeek = onCancelSeek,
+            onSeekGoTime = onSeekGoTime,
             isLikedLambda = isLikedLambda,
             onClickLike = onToggleLike,
             onLongClickClickLike = onLongClickLike,
             onClickDanmaku = onToggleDanmaku,
             onClickSetting = {
                 showInfo = false
-                infoHasFocus = false
                 showMenuController = true
                 onRequestFocus()
             },
-            onClickBack = onExit
-        )
-        SeekController(
-            show = showSeekController,
-            goTime = goTime,
-            moveState = moveState
+            onClickBack = onExit,
+            onClickVideoInfo = {
+
+            },
+            onClickUserInfo = {
+
+            }
         )
         VideoListController(
             show = showListController,
