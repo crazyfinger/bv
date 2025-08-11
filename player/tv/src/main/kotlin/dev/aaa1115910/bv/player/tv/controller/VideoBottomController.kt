@@ -1,5 +1,6 @@
 package dev.aaa1115910.bv.player.tv.controller
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -11,11 +12,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.ThumbUp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +58,8 @@ fun VideoBottomController(
     isPlayingLambda: () -> Boolean,
     isShowDanmakuLambda: () -> Boolean,
     isLikedLambda: () -> Boolean,
-    focusRequester: FocusRequester? = null,
+    focusRequester: FocusRequester,
+    isFocused: Boolean,
     onClickPlay: () -> Unit = {},
     onClickLike: () -> Unit = {},
     onLongClickLike: () -> Unit = {},
@@ -62,13 +67,21 @@ fun VideoBottomController(
     onClickSetting: () -> Unit = {},
     onClickBack: () -> Unit = {},
     onFocusBack: () -> Unit = {},
+    onFocusUp: () -> Unit = {},
+    onClickVideoInfo: () -> Unit = {},
+    onClickUserInfo: () -> Unit = {},
+    onKeyClicked: (Boolean) -> Unit = {},
 ) {
+    var selectedIndex by remember { mutableIntStateOf(0) }
     val controlItems = remember {
         listOf(
             //暂停/播放
             ControlItemData(
                 imageVector = { if (isPlayingLambda()) Icons.Rounded.Pause else Icons.Rounded.PlayArrow },
-                onClick = onClickPlay,
+                onClick = {
+                    Log.d("TAG", "VideoBottomController onFirst button clicked, index: $selectedIndex")
+                    onClickPlay()
+                },
                 showSlash = { false }
             ),
             //弹幕
@@ -83,6 +96,18 @@ fun VideoBottomController(
                 tint = { if (isLikedLambda()) Color(0xfffb7299) else Color.Gray },
                 onClick = onClickLike,
                 onLongClick = onLongClickLike,
+                showSlash = { false }
+            ),
+            //视频信息
+            ControlItemData(
+                imageVector = { Icons.Rounded.Info },
+                onClick = onClickVideoInfo,
+                showSlash = { false }
+            ),
+            //up主页
+            ControlItemData(
+                imageVector = { Icons.Rounded.Person },
+                onClick = onClickUserInfo,
                 showSlash = { false }
             ),
             //设置
@@ -100,49 +125,72 @@ fun VideoBottomController(
         )
     }
 
-    var selectedIndex by remember { mutableIntStateOf(0) }
-
     Row(
         modifier = modifier
-            .focusRequester(focusRequester ?: remember { FocusRequester() })
-            .focusable()
+            .focusRequester(focusRequester)
             .onKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown) {
-                    when (keyEvent.key) {
-                        Key.DirectionLeft -> {
-                            selectedIndex =
-                                if (selectedIndex > 0) selectedIndex - 1 else controlItems.size - 1
-                            true
-                        }
-
-                        Key.DirectionRight -> {
-                            selectedIndex =
-                                if (selectedIndex < controlItems.size - 1) selectedIndex + 1 else 0
-                            true
-                        }
-
-                        Key.DirectionCenter, Key.Enter -> {
-                            controlItems[selectedIndex].onClick()
-                            true
-                        }
-
-                        Key.DirectionUp,
-                        Key.DirectionDown,
-                        Key.Back -> {
-                            onFocusBack()
-                            true
-                        }
-
-                        else -> false
+                Log.d(
+                    "TAG",
+                    "VideoBottomController onKeyEvent type: ${keyEvent.type}, key: ${keyEvent.key},isFocused:$isFocused"
+                )
+                onKeyClicked(keyEvent.type == KeyEventType.KeyUp)
+                if (!isFocused) return@onKeyEvent false
+                when (keyEvent.key) {
+                    Key.DirectionLeft -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        selectedIndex =
+                            if (selectedIndex > 0) selectedIndex - 1 else controlItems.size - 1
+                        true
                     }
-                } else false
+
+                    Key.DirectionRight -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        selectedIndex =
+                            if (selectedIndex < controlItems.size - 1) selectedIndex + 1 else 0
+                        Log.d(
+                            "TAG",
+                            "VideoBottomController button right selectedIndex: $selectedIndex"
+                        )
+                        true
+                    }
+
+                    Key.DirectionCenter, Key.Enter -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        Log.d("TAG", "VideoBottomController button selectedIndex: $selectedIndex")
+                        controlItems[selectedIndex].onClick()
+                        true
+                    }
+
+                    Key.DirectionUp -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        onFocusUp()
+                        true
+                    }
+
+                    Key.DirectionDown -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        onFocusBack()
+                        true
+                    }
+
+                    Key.Back -> {
+                        if (keyEvent.type == KeyEventType.KeyDown) return@onKeyEvent true
+                        onFocusBack()
+                        true
+                    }
+
+                    else -> false
+                }
             }
     ) {
         controlItems.forEachIndexed { index, item ->
+            val isItemSelected by remember(selectedIndex) {
+                derivedStateOf { selectedIndex == index }
+            }
             ControlItem(
                 imageVector = item.imageVector(),
                 showSlash = item.showSlash(),
-                isSelected = selectedIndex == index,
+                isSelected = isFocused && isItemSelected,
                 onClick = item.onClick,
                 tint = item.tint(),
             )
@@ -176,6 +224,7 @@ private fun ControlItem(
     Surface(
         modifier = modifier
             .padding(end = 10.dp)
+            .focusable()
             .clickable {
                 onClick()
             },
@@ -186,8 +235,8 @@ private fun ControlItem(
     ) {
         Icon(
             modifier = Modifier
-                .padding(12.dp, 4.dp)
-                .size(40.dp),
+                .padding(6.dp)
+                .size(30.dp),
             imageVector = imageVector,
             contentDescription = null,
             tint = tint,
@@ -196,14 +245,14 @@ private fun ControlItem(
             Canvas(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(8.dp)
+                    .padding(6.dp)
             ) {
-                val gap = 15f
+                val gap = 12f
                 drawLine(
                     color = Color.White,
                     start = Offset(gap, gap),
                     end = Offset(size.width - gap, size.height - gap),
-                    strokeWidth = 4f,
+                    strokeWidth = 3f,
                     cap = StrokeCap.Round
                 )
             }

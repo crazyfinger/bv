@@ -418,7 +418,8 @@ fun VideoInfoScreen(
                                 ?: "",
                             playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
                                 ?: "",
-                            isLiked = liked
+                            isLiked = liked,
+                            author = videoDetailViewModel.videoDetail?.author,
                         )
                         context.finish()
                     }
@@ -617,6 +618,7 @@ fun VideoInfoScreen(
                                     playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
                                         ?: "",
                                     isLiked = liked,
+                                    author = videoDetailViewModel.videoDetail?.author,
                                 )
                             },
                             onClickUp = {
@@ -749,6 +751,7 @@ fun VideoInfoScreen(
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
                                             ?: "",
                                         isLiked = liked,
+                                        author = videoDetailViewModel.videoDetail?.author,
                                     )
                                 }
                             )
@@ -778,6 +781,7 @@ fun VideoInfoScreen(
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
                                             ?: "",
                                         isLiked = liked,
+                                        author = videoDetailViewModel.videoDetail?.author,
                                     )
                                 },
                                 onClickEpPart = { episode, cid ->
@@ -796,6 +800,7 @@ fun VideoInfoScreen(
                                         playerIconMoving = videoDetailViewModel.videoDetail!!.playerIcon?.moving
                                             ?: "",
                                         isLiked = liked,
+                                        author = videoDetailViewModel.videoDetail?.author,
                                     )
                                 }
                             )

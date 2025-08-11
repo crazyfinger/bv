@@ -1,12 +1,17 @@
 package dev.aaa1115910.bv.player.tv
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -31,7 +36,8 @@ fun VideoSeekBar(
     idleIcon: String = "",
     movingIcon: String = "",
     moveState: SeekMoveState = SeekMoveState.Idle,
-    showPosition: Boolean = false
+    showPosition: Boolean = false,
+    isFocused: Boolean = false,
 ) {
     VideoSeekBar(
         modifier = modifier,
@@ -39,6 +45,7 @@ fun VideoSeekBar(
         position = position,
         bufferedPercentage = bufferedPercentage,
         showPosition = showPosition,
+        isFocused = isFocused,
         thumb = { thumbModifier ->
             SeekBarThumb(
                 modifier = thumbModifier,
@@ -58,6 +65,7 @@ private fun VideoSeekBar(
     bufferedPercentage: Int,
     colors: SliderColors = SliderDefaults.colors(),
     showPosition: Boolean = false,
+    isFocused: Boolean = false,
     thumb: (@Composable (Modifier) -> Unit)? = null
 ) {
     BoxWithConstraints(
@@ -70,19 +78,29 @@ private fun VideoSeekBar(
         ) {
             val (positionText, seek, thumbIcon) = createRefs()
 
-            SeekBar(
+            Row (
                 modifier = Modifier
                     .constrainAs(seek) {
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom, 12.dp)
                     }
-                    .padding(horizontal = 12.dp),
-                duration = duration,
-                position = position,
-                bufferedPercentage = bufferedPercentage,
-                colors = colors
-            )
+                    .focusable()
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = if (isFocused) 0.5f else 0f),
+                        shape = RoundedCornerShape(6.dp)
+                    ),
+            ){
+                SeekBar(
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp),
+                    duration = duration,
+                    position = position,
+                    bufferedPercentage = bufferedPercentage,
+                    colors = colors
+                )
+            }
             thumb?.invoke(
                 Modifier
                     .constrainAs(thumbIcon) {
@@ -96,7 +114,7 @@ private fun VideoSeekBar(
             )
             if (showPosition) {
                 Text(
-                    text = position.formatHourMinSec(),
+                    text = "${position.formatHourMinSec()} / ${duration.formatHourMinSec()}",
                     modifier = Modifier.constrainAs(positionText) {
                         start.linkTo(thumbIcon.start)
                         end.linkTo(thumbIcon.end)
@@ -120,6 +138,7 @@ private fun SeekWithThumbPreview(@PreviewParameter(ProgressProvider::class) data
                 position = data.second,
                 bufferedPercentage = data.third,
                 showPosition = true,
+                isFocused = true,
                 thumb = { modifier ->
                     SeekBarThumb(
                         modifier = modifier,

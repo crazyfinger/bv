@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import dev.aaa1115910.biliapi.entity.user.Author
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
 import dev.aaa1115910.bv.tv.component.RemoteControlPanelDemo
 import dev.aaa1115910.bv.ui.theme.BVTheme
@@ -33,6 +34,7 @@ class RemoteControllerPanelDemoActivity : ComponentActivity() {
             playerIconIdle: String = "",
             playerIconMoving: String = "",
             isLiked: Boolean = false,
+            author: Author? = null
         ) {
             context.startActivity(
                 Intent(context, RemoteControllerPanelDemoActivity::class.java).apply {
@@ -50,6 +52,8 @@ class RemoteControllerPanelDemoActivity : ComponentActivity() {
                     putExtra("playerIconIdle", playerIconIdle)
                     putExtra("playerIconMoving", playerIconMoving)
                     putExtra("isLiked", isLiked)
+                    putExtra("author_mid", author?.mid)
+                    putExtra("author_name", author?.name)
                 }
             )
         }

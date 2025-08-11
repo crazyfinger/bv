@@ -3,7 +3,6 @@ package dev.aaa1115910.bv.player.seekbar
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
@@ -22,7 +21,7 @@ fun SeekBar(
     bufferedPercentage: Int,
     colors: SliderColors = SliderDefaults.colors(),
 ) {
-    val trackWidth = 20f
+    val trackWidth = 14f
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -57,7 +56,6 @@ fun SeekBar(
 private fun SeekPreview() {
     MaterialTheme {
         SeekBar(
-            modifier = Modifier.padding(horizontal = 16.dp),
             duration = 1000,
             position = 300,
             bufferedPercentage = 50

@@ -7,6 +7,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import dev.aaa1115910.biliapi.entity.ApiType
+import dev.aaa1115910.biliapi.entity.user.Author
 import dev.aaa1115910.bv.R
 import dev.aaa1115910.bv.entity.PlayerType
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
@@ -39,6 +40,7 @@ class VideoPlayerV3Activity : ComponentActivity() {
             playerIconIdle: String = "",
             playerIconMoving: String = "",
             isLiked: Boolean,
+            author: Author? = null
         ) {
             context.startActivity(
                 Intent(
@@ -59,6 +61,8 @@ class VideoPlayerV3Activity : ComponentActivity() {
                     putExtra("playerIconIdle", playerIconIdle)
                     putExtra("playerIconMoving", playerIconMoving)
                     putExtra("isLiked", isLiked)
+                    putExtra("author_mid", author?.mid)
+                    putExtra("author_name", author?.name)
                 }
             )
         }
@@ -132,6 +136,8 @@ class VideoPlayerV3Activity : ComponentActivity() {
             val playerIconIdle = intent.getStringExtra("playerIconIdle") ?: ""
             val playerIconMoving = intent.getStringExtra("playerIconMoving") ?: ""
             val isLiked = intent.getBooleanExtra("isLiked", false)
+            val authorMid = intent.getLongExtra("author_mid", 0)
+            val authorName = intent.getStringExtra("author_name")
             dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity.Companion.logger.fInfo { "Launch parameter: [aid=$aid, cid=$cid]" }
             playerViewModel.apply {
                 loadPlayUrl(
@@ -151,6 +157,8 @@ class VideoPlayerV3Activity : ComponentActivity() {
                 this.playerIconIdle = playerIconIdle
                 this.playerIconMoving = playerIconMoving
                 this.isLiked = isLiked
+                this.authorMid = authorMid
+                this.authorName = authorName ?: ""
             }
         } else {
             dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity.Companion.logger.fInfo { "Null launch parameter" }

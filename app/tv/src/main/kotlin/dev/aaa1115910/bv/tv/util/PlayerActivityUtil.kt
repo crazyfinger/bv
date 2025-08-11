@@ -1,6 +1,7 @@
 package dev.aaa1115910.bv.tv.util
 
 import android.content.Context
+import dev.aaa1115910.biliapi.entity.user.Author
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
 import dev.aaa1115910.bv.tv.activities.video.RemoteControllerPanelDemoActivity
 import dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity
@@ -22,16 +23,17 @@ fun launchPlayerActivity(
     playerIconIdle: String = "",
     playerIconMoving: String = "",
     isLiked: Boolean,
+    author: Author? = null
 ) {
     if (Prefs.showedRemoteControllerPanelDemo) {
         VideoPlayerV3Activity.actionStart(
             context, avid, cid, title, partTitle, played, fromSeason, subType, epid, seasonId,
-            isVerticalVideo, proxyArea, playerIconIdle, playerIconMoving, isLiked
+            isVerticalVideo, proxyArea, playerIconIdle, playerIconMoving, isLiked, author
         )
     } else {
         RemoteControllerPanelDemoActivity.actionStart(
             context, avid, cid, title, partTitle, played, fromSeason, subType, epid, seasonId,
-            isVerticalVideo, proxyArea, playerIconIdle, playerIconMoving, isLiked
+            isVerticalVideo, proxyArea, playerIconIdle, playerIconMoving, isLiked, author
         )
     }
 }

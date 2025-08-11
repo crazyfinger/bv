@@ -125,9 +125,12 @@ class VideoPlayerV3ViewModel(
     var playerIconMoving by mutableStateOf("")
     var isLiked by mutableStateOf(false)
 
-    private var currentAid = 0L
+    var currentAid = 0L
     var currentCid by mutableLongStateOf(0L)
     private var currentEpid = 0
+
+    var authorMid by mutableLongStateOf(0L)
+    var authorName by mutableStateOf("")
 
     private suspend fun releaseDanmakuPlayer() = withContext(Dispatchers.Main) {
         danmakuPlayer?.release()

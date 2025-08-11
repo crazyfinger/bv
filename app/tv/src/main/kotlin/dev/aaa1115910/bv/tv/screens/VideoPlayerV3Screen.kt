@@ -39,6 +39,8 @@ import dev.aaa1115910.bv.player.entity.VideoPlayerVideoShotData
 import dev.aaa1115910.bv.player.tv.BvPlayer
 import dev.aaa1115910.bv.player.tv.controller.SkipTip
 import dev.aaa1115910.bv.tv.R
+import dev.aaa1115910.bv.tv.activities.video.UpInfoActivity
+import dev.aaa1115910.bv.tv.activities.video.VideoInfoActivity
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.swapList
 import dev.aaa1115910.bv.util.toast
@@ -326,6 +328,25 @@ fun VideoPlayerV3Screen(
                             }
                         }
                     }
+                },
+                onClickVideoInfo = {
+                    if (Prefs.showUGCVideoInfo && !playerViewModel.fromSeason) {
+                        (context as Activity).finish()
+                    } else {
+                        VideoInfoActivity.actionStart(
+                            context = context,
+                            aid = playerViewModel.currentAid,
+                            fromSeason = playerViewModel.fromSeason,
+                            proxyArea = playerViewModel.proxyArea
+                        )
+                    }
+                },
+                onClickUserInfo = {
+                    UpInfoActivity.actionStart(
+                        context,
+                        mid = playerViewModel.authorMid,
+                        name = playerViewModel.authorName
+                    )
                 },
                 onLongClickLike = {
                     context.getString(R.string.still_working).toast(context)

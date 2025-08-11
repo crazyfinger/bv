@@ -1,10 +1,12 @@
 package dev.aaa1115910.bv.player.tv.controller
 
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +25,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -34,23 +43,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import dev.aaa1115910.biliapi.entity.video.VideoShot
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerClockData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoInfoData
+import dev.aaa1115910.bv.player.entity.LocalVideoPlayerVideoShotData
 import dev.aaa1115910.bv.player.entity.VideoPlayerClockData
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekData
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekThumbData
 import dev.aaa1115910.bv.player.entity.VideoPlayerVideoInfoData
 import dev.aaa1115910.bv.player.seekbar.SeekMoveState
 import dev.aaa1115910.bv.player.tv.VideoSeekBar
+import dev.aaa1115910.bv.util.countDownTimer
 
 @Composable
 fun ControllerVideoInfo(
     modifier: Modifier = Modifier,
     show: Boolean,
+    isSeeking: Boolean,
+    goTime: Long,
+    onDirectionLeft: () -> Unit,
+    onDirectionRight: () -> Unit,
+    onSeekGoTime: () -> Unit,
+    onCancelSeek: () -> Unit,
     onHideInfo: () -> Unit,
-    focusRequester: FocusRequester? = null,
     isPlayingLambda: () -> Boolean,
     isShowDanmakuLambda: () -> Boolean,
     onClickPlay: () -> Unit = {},
@@ -60,30 +77,14 @@ fun ControllerVideoInfo(
     onClickDanmaku: () -> Unit = {},
     onClickSetting: () -> Unit = {},
     onClickBack: () -> Unit = {},
+    onClickVideoInfo: () -> Unit = {},
+    onClickUserInfo: () -> Unit = {},
     ) {
     val videoPlayerClockData = LocalVideoPlayerClockData.current
     val videoPlayerSeekData = LocalVideoPlayerSeekData.current
     val videoPlayerSeekThumbData = LocalVideoPlayerSeekThumbData.current
     val videoPlayerVideoInfoData = LocalVideoPlayerVideoInfoData.current
-
-    var seekHideTimer: CountDownTimer? by remember { mutableStateOf(null) }
-    val setCloseInfoTimer: () -> Unit = {
-        if (show) {
-            seekHideTimer?.cancel()
-            seekHideTimer = object : CountDownTimer(5000, 1000) {
-                override fun onTick(millisUntilFinished: Long) {}
-                override fun onFinish() = onHideInfo()
-            }
-            seekHideTimer?.start()
-        } else {
-            seekHideTimer?.cancel()
-            seekHideTimer = null
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        setCloseInfoTimer()
-    }
+    val videoPlayerVideoShotData = LocalVideoPlayerVideoShotData.current
 
     Box(
         modifier = modifier.fillMaxSize()
@@ -114,13 +115,21 @@ fun ControllerVideoInfo(
             label = "ControllerBottomVideoInfo"
         ) {
             ControllerVideoInfoBottom(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter),
                 seekData = videoPlayerSeekData,
                 idleIcon = videoPlayerSeekThumbData.idleIcon,
                 movingIcon = videoPlayerSeekThumbData.movingIcon,
+                isSeeking = isSeeking,
+                goTime = goTime,
+                videoShot = videoPlayerVideoShotData.videoShot,
+                onDirectionLeft = onDirectionLeft,
+                onDirectionRight = onDirectionRight,
+                onSeekGoTime = onSeekGoTime,
+                onCancelSeek = onCancelSeek,
                 isPlayingLambda = isPlayingLambda,
                 isShowDanmakuLambda = isShowDanmakuLambda,
                 isLikedLambda = isLikedLambda,
-                focusRequester = focusRequester,
                 onClickPlay = onClickPlay,
                 onClickLike = onClickLike,
                 onLongClickLike = onLongClickClickLike,
@@ -128,6 +137,8 @@ fun ControllerVideoInfo(
                 onClickSetting = onClickSetting,
                 onClickBack = onClickBack,
                 onFocusBack = onHideInfo,
+                onClickVideoInfo = onClickVideoInfo,
+                onClickUserInfo = onClickUserInfo,
                 )
         }
     }
@@ -174,10 +185,16 @@ fun ControllerVideoInfoBottom(
     seekData: VideoPlayerSeekData,
     idleIcon: String,
     movingIcon: String,
+    isSeeking: Boolean,
+    goTime: Long,
+    videoShot: VideoShot?,
+    onDirectionLeft: () -> Unit,
+    onDirectionRight: () -> Unit,
+    onSeekGoTime: () -> Unit,
+    onCancelSeek: () -> Unit,
     isPlayingLambda: () -> Boolean,
     isShowDanmakuLambda: () -> Boolean,
     isLikedLambda: () -> Boolean,
-    focusRequester: FocusRequester?,
     onClickPlay: () -> Unit,
     onClickLike: () -> Unit,
     onLongClickLike: () -> Unit,
@@ -185,22 +202,130 @@ fun ControllerVideoInfoBottom(
     onClickSetting: () -> Unit,
     onClickBack: () -> Unit,
     onFocusBack: () -> Unit,
+    onClickVideoInfo: () -> Unit,
+    onClickUserInfo: () -> Unit,
 ) {
+    val seekFocusRequester = remember { FocusRequester() }
+    val buttonsFocusRequester = remember { FocusRequester() }
+
+    var isSeekFocused by remember { mutableStateOf(true) }
+    var seekHideTimer: CountDownTimer? by remember { mutableStateOf(null) }
+    val resetCloseInfoTimer: (Boolean) -> Unit = { restart ->
+        Log.d("TAG", "ControllerVideoInfoBottom resetCloseInfoTimer restart: $restart")
+        seekHideTimer?.cancel()
+        if (restart) {
+            seekHideTimer = countDownTimer(5000, 1000, "hideVideoInfoTimer") {
+                onFocusBack()
+            }
+        }
+    }
+    val stopCloseInfoTimer: () -> Unit = {
+        seekHideTimer?.cancel()
+        seekHideTimer = null
+    }
+    val onHide: () -> Unit = {
+        onFocusBack()
+        stopCloseInfoTimer()
+    }
+    val onButtonFocusUp: () -> Unit = {
+        seekFocusRequester.requestFocus()
+    }
+
+    LaunchedEffect(Unit) {
+        seekFocusRequester.requestFocus()
+        resetCloseInfoTimer(true)
+    }
     Column(
         modifier = modifier
 //            .clip(
 //                MaterialTheme.shapes.large
 //                    .copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
 //            )
-            .background(Color.Black.copy(0.4f))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.Bottom
     ) {
+        if (isSeeking && videoShot != null) {
+            VideoShot(
+                modifier = Modifier
+                    .padding(horizontal = 48.dp),
+                videoShot = videoShot,
+                position = goTime,
+                duration = seekData.duration,
+                coercedOffset = (-24).dp
+            )
+        }
         VideoSeekBar(
             modifier = Modifier
-                .fillMaxWidth(),
+                .padding(horizontal = 8.dp)
+                .focusable()
+                .fillMaxWidth()
+                .focusRequester(seekFocusRequester)
+                .onKeyEvent {
+                    resetCloseInfoTimer(it.type == KeyEventType.KeyUp)
+                    if (!isSeekFocused) return@onKeyEvent false
+                    when (it.key) {
+                        Key.DirectionCenter, Key.Enter, Key.Spacebar -> {
+                            if (it.type == KeyEventType.KeyDown) return@onKeyEvent true
+                            Log.d(
+                                "TAG",
+                                "ControllerVideoInfoBottom seek isSeekFocused: $isSeekFocused, isSeeking:$isSeeking"
+                            )
+                            if (isSeeking) {
+                                onSeekGoTime()
+                            } else {
+                                Log.d("TAG", "ControllerVideoInfoBottom: onClickPlay")
+                                onClickPlay()
+                            }
+                            return@onKeyEvent true
+                        }
+
+                        Key.DirectionLeft, Key.MediaRewind -> {
+                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                            onDirectionLeft()
+                            return@onKeyEvent true
+                        }
+
+                        Key.DirectionRight, Key.MediaFastForward -> {
+                            if (it.type == KeyEventType.KeyUp) return@onKeyEvent true
+                            onDirectionRight()
+                            return@onKeyEvent true
+                        }
+
+                        Key.DirectionDown -> {
+                            if (it.type == KeyEventType.KeyDown) return@onKeyEvent true
+                            Log.d(
+                                "TAG",
+                                "ControllerVideoInfoBottom seek DirectionDown: $isSeekFocused"
+                            )
+                            onCancelSeek()
+                            buttonsFocusRequester.requestFocus()
+                            return@onKeyEvent true
+                        }
+
+                        Key.DirectionUp -> {
+                            if (it.type == KeyEventType.KeyDown) return@onKeyEvent true
+                            Log.d(
+                                "TAG",
+                                "ControllerVideoInfoBottom seek DirectionUp : $isSeekFocused"
+                            )
+                            if (isSeekFocused) {
+                                onHide()
+                            } else {
+                                seekFocusRequester.requestFocus()
+                            }
+                            return@onKeyEvent true
+                        }
+                    }
+                    return@onKeyEvent false
+                }
+                .onFocusChanged {
+                    isSeekFocused = it.isFocused
+                    Log.d("TAG", "ControllerVideoInfoBottom onFocusChanged: $isSeekFocused")
+                },
+            isFocused = isSeekFocused,
             duration = seekData.duration,
-            position = seekData.position,
+            showPosition = isSeeking,
+            position = if (isSeeking) goTime else seekData.position,
             bufferedPercentage = seekData.bufferedPercentage,
             moveState = SeekMoveState.Idle,
             idleIcon = idleIcon,
@@ -213,14 +338,19 @@ fun ControllerVideoInfoBottom(
             isPlayingLambda = isPlayingLambda,
             isShowDanmakuLambda = isShowDanmakuLambda,
             isLikedLambda = isLikedLambda,
-            focusRequester = focusRequester,
+            focusRequester = buttonsFocusRequester,
+            isFocused = !isSeekFocused,
             onClickPlay = onClickPlay,
             onClickLike = onClickLike,
             onLongClickLike = onLongClickLike,
             onClickDanmaku = onClickDanmaku,
             onClickSetting = onClickSetting,
             onClickBack = onClickBack,
-            onFocusBack = onFocusBack,
+            onFocusBack = onHide,
+            onFocusUp = onButtonFocusUp,
+            onClickVideoInfo = onClickVideoInfo,
+            onClickUserInfo = onClickUserInfo,
+            onKeyClicked = resetCloseInfoTimer,
         )
     }
 }
@@ -305,6 +435,12 @@ private fun ControllerVideoInfoPreview() {
                 onHideInfo = {},
                 isPlayingLambda = { true },
                 isShowDanmakuLambda = { true },
+                isSeeking = false,
+                goTime = 0,
+                onDirectionRight = {},
+                onDirectionLeft = {},
+                onSeekGoTime = {},
+                onCancelSeek = {},
                 isLikedLambda = { false }
             )
         }

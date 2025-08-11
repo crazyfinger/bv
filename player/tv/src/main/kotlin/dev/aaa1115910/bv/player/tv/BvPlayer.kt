@@ -102,6 +102,8 @@ fun BvPlayer(
     onToggleDanmaku: (Boolean) -> Unit,
     onToggleLike: ((Boolean) -> Unit) -> Unit,
     onLongClickLike: () -> Unit,
+    onClickVideoInfo: () -> Unit,
+    onClickUserInfo: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val logger = KotlinLogging.logger("BvPlayer")
@@ -681,6 +683,8 @@ fun BvPlayer(
             onLongClickLike = {
                 onLongClickLike()
             },
+            onClickVideoInfo = onClickVideoInfo,
+            onClickUserInfo = onClickUserInfo,
         ) {
             LaunchedEffect(Unit) {
                 videoPlayer.setOptions()
