@@ -50,14 +50,14 @@ import dev.aaa1115910.biliapi.entity.ugc.toSmartDate
 import dev.aaa1115910.biliapi.repositories.SearchType
 import dev.aaa1115910.biliapi.repositories.SearchTypeResult
 import dev.aaa1115910.bv.R
-import dev.aaa1115910.bv.tv.component.videocard.SeasonCard
-import dev.aaa1115910.bv.tv.component.videocard.SmallVideoCard
 import dev.aaa1115910.bv.entity.carddata.SeasonCardData
 import dev.aaa1115910.bv.entity.carddata.VideoCardData
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
 import dev.aaa1115910.bv.tv.activities.video.SeasonInfoActivity
 import dev.aaa1115910.bv.tv.activities.video.UpInfoActivity
 import dev.aaa1115910.bv.tv.activities.video.VideoInfoActivity
+import dev.aaa1115910.bv.tv.component.videocard.SeasonCard
+import dev.aaa1115910.bv.tv.component.videocard.SmallVideoCard
 import dev.aaa1115910.bv.tv.screens.user.UpCard
 import dev.aaa1115910.bv.util.Prefs
 import dev.aaa1115910.bv.util.fInfo
@@ -68,6 +68,7 @@ import dev.aaa1115910.bv.viewmodel.search.SearchResultViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.util.Locale
 
 @Composable
 fun SearchResultScreen(
@@ -338,7 +339,7 @@ private fun SearchResultListItem(
                     seasonId = searchResult.seasonId,
                     title = searchResult.title.removeHtmlTags(),
                     cover = searchResult.cover,
-                    rating = String.format("%.1f", searchResult.star)
+                    rating = String.format(Locale.PRC, "%.1f", searchResult.star)
                 ),
                 onClick = onClick,
                 onLongClick = onLongClick,

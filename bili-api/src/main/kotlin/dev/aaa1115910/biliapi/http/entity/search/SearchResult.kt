@@ -26,7 +26,7 @@ data class SearchResultData(
     @SerialName("rqt_type")
     val rqtType: String,
     @SerialName("cost_time")
-    val costTime: SearchCost,
+    val costTime: SearchCost? = null,
     @SerialName("exp_list")
     val expList: JsonElement? = null,
     @SerialName("egg_hit")
@@ -45,7 +45,7 @@ data class SearchResultData(
     val inBlackKey: Int,
     @SerialName("in_white_key")
     val inWhiteKey: Int,
-    val result: List<JsonElement>,
+    val result: List<JsonElement>? = null,
     @Transient
     val searchAllResults: MutableList<SearchResult<SearchResultItem>> = mutableListOf(),
     @Transient
@@ -54,12 +54,12 @@ data class SearchResultData(
     val isSearchPageGrayed: Int? = null
 ) {
     init {
-        result.forEach { searchResultJsonElement ->
+        result?.forEach { searchResultJsonElement ->
             val searchResultJsonObject = searchResultJsonElement.jsonObject
             var resultType = searchResultJsonObject["result_type"]?.jsonPrimitive?.content
             val json = Json {
-                coerceInputValues = true
-                ignoreUnknownKeys = true
+                coerceInputValues = true // 自动处理类型不匹配的字段
+                ignoreUnknownKeys = true // 忽略 JSON 中多余的字段
                 prettyPrint = true
             }
             if (resultType != null) {

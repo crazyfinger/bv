@@ -257,7 +257,8 @@ fun CardCover(
                 .clip(MaterialTheme.shapes.large),
             model = cover.resizedImageUrl(ImageSize.SmallVideoCardCover),
             contentDescription = null,
-            contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.FillBounds,
+            error = painterResource(id = R.drawable.ic_gamer_ani),
         )
         Box(
             modifier = Modifier
@@ -308,7 +309,8 @@ private fun ColumnScope.CardInfo(
         ) {
             UpIcon()
             Text(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
                     .padding(end = 2.dp),
                 text = upName,
                 style = MaterialTheme.typography.labelMedium,
