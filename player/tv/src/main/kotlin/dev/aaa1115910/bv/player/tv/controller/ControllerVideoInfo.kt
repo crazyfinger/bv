@@ -273,7 +273,6 @@ fun ControllerVideoInfoBottom(
                             if (isSeeking) {
                                 onSeekGoTime()
                             } else {
-                                Log.d("TAG", "ControllerVideoInfoBottom: onClickPlay")
                                 onClickPlay()
                             }
                             return@onKeyEvent true

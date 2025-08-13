@@ -192,6 +192,9 @@ fun VideoPlayerController(
                             logger.fInfo { "[${it.key}] hide all controllers" }
                             showMenuController = false
                             showListController = false
+                            if (showInfo && isSeeking) {
+                                onCancelSeek()
+                            }
                             showInfo = false
                         }
                         onRequestFocus()
