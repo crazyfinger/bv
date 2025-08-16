@@ -7,6 +7,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -19,6 +23,7 @@ import dev.aaa1115910.bv.player.AbstractVideoPlayer
 import dev.aaa1115910.bv.player.OkHttpUtil
 import dev.aaa1115910.bv.player.VideoPlayerOptions
 import dev.aaa1115910.bv.util.formatHourMinSec
+import java.io.File
 
 @OptIn(UnstableApi::class)
 class ExoMediaPlayer(
@@ -28,14 +33,25 @@ class ExoMediaPlayer(
     var mPlayer: ExoPlayer? = null
     protected var mMediaSource: MediaSource? = null
 
-    @OptIn(UnstableApi::class)
-    private val dataSourceFactory =
-        OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
-            options.userAgent?.let { setUserAgent(it) }
-            options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
-        }
-
+    private val cacheDataSourceFactory: CacheDataSource.Factory
     init {
+        val cacheDir = File(context.cacheDir, "media_cache")
+        val cacheSize: Long = 1024 * 1024 * 200 // 200MB缓存大小
+        val simpleCache = SimpleCache(
+            cacheDir,
+            LeastRecentlyUsedCacheEvictor(cacheSize),
+            StandaloneDatabaseProvider(context)
+        )
+        val dataSourceFactory =
+            OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
+                options.userAgent?.let { setUserAgent(it) }
+                options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
+            }
+        cacheDataSourceFactory = CacheDataSource.Factory()
+            .setCache(simpleCache)
+            .setUpstreamDataSourceFactory(dataSourceFactory)
+            .setCacheReadDataSourceFactory(dataSourceFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         initPlayer()
     }
 
@@ -60,7 +76,7 @@ class ExoMediaPlayer(
                 DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS // 重新缓冲后的播放缓冲
             )
             // 设置是否在缓冲策略中优先考虑时间阈值而不是大小阈值
-            .setPrioritizeTimeOverSizeThresholds(true)
+            .setPrioritizeTimeOverSizeThresholds(false)
             // 根据系统可用内存动态计算缓冲区大小
             .setTargetBufferBytes(calculateOptimalBufferSize())
             .setBackBuffer(12000, false) // 保证一次回退即可，减少回退缓冲到12秒，节省更多内存给前向缓冲
@@ -89,11 +105,11 @@ class ExoMediaPlayer(
     @OptIn(UnstableApi::class)
     override fun playUrl(videoUrl: String?, audioUrl: String?) {
         val videoMediaSource = videoUrl?.let {
-            ProgressiveMediaSource.Factory(dataSourceFactory)
+            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
                 .createMediaSource(MediaItem.fromUri(it))
         }
         val audioMediaSource = audioUrl?.let {
-            ProgressiveMediaSource.Factory(dataSourceFactory)
+            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
                 .createMediaSource(MediaItem.fromUri(it))
         }
 
@@ -225,11 +241,11 @@ class ExoMediaPlayer(
         val availableMemory = memoryInfo.availMem
 
         // 计算可用内存的10%作为缓冲区大小
-        val tenPercentOfAvailableMemory = (availableMemory * 0.15).toLong()
+        val tenPercentOfAvailableMemory = (availableMemory * 0.4).toLong()
 
         // 设置最小和最大限制（10MB到200MB）
         val minBufferSize = 10 * 1024 * 1024
-        val maxBufferSize = 200 * 1024 * 1024
+        val maxBufferSize = 400 * 1024 * 1024
 
         return when {
             tenPercentOfAvailableMemory < minBufferSize -> minBufferSize
