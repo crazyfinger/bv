@@ -184,7 +184,8 @@ fun BvPlayer(
         danmakuConfig = danmakuConfig.copy(
             retainerPolicy = RETAINER_BILIBILI,
             textSizeScale = videoPlayerConfigData.currentDanmakuScale,
-            dataFilter = listOf(typeFilter)
+            dataFilter = listOf(typeFilter),
+            visibility = isShowDanmaku,
         )
         danmakuConfig.updateFilter()
         logger.info { "Init danmaku config: $danmakuConfig" }
@@ -676,6 +677,9 @@ fun BvPlayer(
                 logger.info { "On danmaku toggle" }
                 isShowDanmaku = !isShowDanmaku
                 onToggleDanmaku(isShowDanmaku)
+                danmakuConfig = danmakuConfig.copy(visibility = isShowDanmaku)
+                danmakuConfig.updateVisibility()
+                mDanmakuPlayer?.updateConfig(danmakuConfig)
             },
             onToggleLike = {
                 onToggleLike {
@@ -705,7 +709,7 @@ fun BvPlayer(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .fillMaxHeight(if (isShowDanmaku) videoPlayerConfigData.currentDanmakuArea else 0f)
+                    .fillMaxHeight(videoPlayerConfigData.currentDanmakuArea)
                     .fillMaxHeight()
                     .alpha(videoPlayerConfigData.currentDanmakuOpacity)
                     .ifElse(
