@@ -35,20 +35,13 @@ class ExoMediaPlayer(
 
     private val cacheDataSourceFactory: CacheDataSource.Factory
     init {
-        val cacheDir = File(context.cacheDir, "media_cache")
-        val cacheSize: Long = 1024 * 1024 * 200 // 200MB缓存大小
-        val simpleCache = SimpleCache(
-            cacheDir,
-            LeastRecentlyUsedCacheEvictor(cacheSize),
-            StandaloneDatabaseProvider(context)
-        )
         val dataSourceFactory =
             OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
                 options.userAgent?.let { setUserAgent(it) }
                 options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
             }
         cacheDataSourceFactory = CacheDataSource.Factory()
-            .setCache(simpleCache)
+            .setCache(CacheManager.getCache(context))
             .setUpstreamDataSourceFactory(dataSourceFactory)
             .setCacheReadDataSourceFactory(dataSourceFactory)
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
@@ -148,6 +141,7 @@ class ExoMediaPlayer(
 
     override fun release() {
         mPlayer?.release()
+        CacheManager.release()
     }
 
     override val currentPosition: Long
@@ -251,6 +245,23 @@ class ExoMediaPlayer(
             tenPercentOfAvailableMemory < minBufferSize -> minBufferSize
             tenPercentOfAvailableMemory > maxBufferSize -> maxBufferSize
             else -> tenPercentOfAvailableMemory.toInt()
+        }
+    }
+
+    object CacheManager {
+        private var simpleCache: SimpleCache? = null
+
+        fun getCache(context: Context): SimpleCache {
+            return simpleCache ?: SimpleCache(
+                File(context.cacheDir, "media_cache"),
+                LeastRecentlyUsedCacheEvictor(1024 * 1024 * 200),
+                StandaloneDatabaseProvider(context)
+            ).also { simpleCache = it }
+        }
+
+        fun release() {
+            simpleCache?.release()
+            simpleCache = null
         }
     }
 }

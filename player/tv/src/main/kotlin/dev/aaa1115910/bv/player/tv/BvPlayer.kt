@@ -60,6 +60,7 @@ import dev.aaa1115910.bv.player.entity.VideoPlayerClockData
 import dev.aaa1115910.bv.player.entity.VideoPlayerDebugInfoData
 import dev.aaa1115910.bv.player.entity.VideoPlayerSeekData
 import dev.aaa1115910.bv.player.entity.VideoPlayerStateData
+import dev.aaa1115910.bv.player.impl.exo.ExoMediaPlayer
 import dev.aaa1115910.bv.player.tv.controller.VideoPlayerController
 import dev.aaa1115910.bv.player.util.danmakuMask
 import dev.aaa1115910.bv.util.countDownTimer
@@ -485,6 +486,7 @@ fun BvPlayer(
     DisposableEffect(Unit) {
         onDispose {
             videoPlayer.release()
+            ExoMediaPlayer.CacheManager.release()
         }
     }
 
