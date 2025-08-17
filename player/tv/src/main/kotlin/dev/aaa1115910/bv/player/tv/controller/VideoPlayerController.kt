@@ -200,6 +200,15 @@ fun VideoPlayerController(
                         onRequestFocus()
                         return@onPreviewKeyEvent true
                     }
+                    if (showListController) {
+                        when (it.key) {
+                            Key.DirectionLeft -> {
+                                if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
+                                showListController = false
+                                return@onPreviewKeyEvent true
+                            }
+                        }
+                    }
                     return@onPreviewKeyEvent false
                 }
 
