@@ -1,5 +1,6 @@
 package dev.aaa1115910.bv.tv.activities.video
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -42,29 +43,32 @@ class VideoPlayerV3Activity : ComponentActivity() {
             isLiked: Boolean,
             author: Author? = null
         ) {
-            context.startActivity(
-                Intent(
-                    context,
-                    dev.aaa1115910.bv.tv.activities.video.VideoPlayerV3Activity::class.java
-                ).apply {
-                    putExtra("avid", avid)
-                    putExtra("cid", cid)
-                    putExtra("title", title)
-                    putExtra("partTitle", partTitle)
-                    putExtra("played", played)
-                    putExtra("fromSeason", fromSeason)
-                    putExtra("subType", subType)
-                    putExtra("epid", epid)
-                    putExtra("seasonId", seasonId)
-                    putExtra("isVerticalVideo", isVerticalVideo)
-                    putExtra("proxy_area", proxyArea.ordinal)
-                    putExtra("playerIconIdle", playerIconIdle)
-                    putExtra("playerIconMoving", playerIconMoving)
-                    putExtra("isLiked", isLiked)
-                    putExtra("author_mid", author?.mid)
-                    putExtra("author_name", author?.name)
-                }
-            )
+            val intent = Intent(
+                context,
+                VideoPlayerV3Activity::class.java
+            ).apply {
+                putExtra("avid", avid)
+                putExtra("cid", cid)
+                putExtra("title", title)
+                putExtra("partTitle", partTitle)
+                putExtra("played", played)
+                putExtra("fromSeason", fromSeason)
+                putExtra("subType", subType)
+                putExtra("epid", epid)
+                putExtra("seasonId", seasonId)
+                putExtra("isVerticalVideo", isVerticalVideo)
+                putExtra("proxy_area", proxyArea.ordinal)
+                putExtra("playerIconIdle", playerIconIdle)
+                putExtra("playerIconMoving", playerIconMoving)
+                putExtra("isLiked", isLiked)
+                putExtra("author_mid", author?.mid)
+                putExtra("author_name", author?.name)
+            }
+            if (context is Activity) {
+                context.startActivityForResult(intent, VideoInfoActivity.REQUEST_CODE_IS_LIKED)
+            } else {
+                context.startActivity(intent)
+            }
         }
     }
 
@@ -83,6 +87,7 @@ class VideoPlayerV3Activity : ComponentActivity() {
                 VideoPlayerV3Screen()
             }
         }
+
     }
 
     override fun onDestroy() {
@@ -94,6 +99,14 @@ class VideoPlayerV3Activity : ComponentActivity() {
         super.onPause()
         playerViewModel.videoPlayer?.pause()
         playerViewModel.danmakuPlayer?.pause()
+    }
+
+    override fun finish() {
+        val resultIntent = Intent().apply {
+            putExtra(VideoInfoActivity.KEY_IS_LIKED, playerViewModel.isLiked)
+        }
+        setResult(RESULT_OK, resultIntent)
+        super.finish()
     }
 
     private fun initVideoPlayer() {

@@ -222,6 +222,16 @@ class VideoDetailViewModel(
             }.isSuccess
         }
     }
+
+    fun updateLikeStatus(newIsLiked: Boolean) {
+        videoDetail?.userActions?.let { userActions ->
+            videoDetail = videoDetail?.copy(
+                userActions = userActions.copy(
+                    like = newIsLiked
+                )
+            )
+        }
+    }
 }
 
 enum class VideoInfoState {

@@ -357,11 +357,7 @@ fun VideoInfoScreen(
         videoInfoRepository.videoList.addAll(partVideoList)
     }
 
-    var liked by remember { mutableStateOf(false) }
-
-    val updateVideoIsLiked = {
-        liked = videoDetailViewModel.videoDetail?.userActions?.like ?: false
-    }
+    val liked by remember { derivedStateOf { videoDetailViewModel.videoDetail?.userActions?.like ?: false } }
 
     var isCoin by remember { mutableStateOf(false) }
 
@@ -397,7 +393,6 @@ fun VideoInfoScreen(
                 runCatching {
                     videoDetailViewModel.loadDetail(aid, fromSeason, !showUGCVideoInfo)
                     updateVideoIsFavoured()
-                    updateVideoIsLiked()
                     updateVideoIsCoin()
                     setHistory()
                     if (Prefs.isLogin) fetchFavoriteData(aid)
@@ -665,7 +660,7 @@ fun VideoInfoScreen(
                                 scope.launch {
                                     if (!liked) {
                                         if (videoDetailViewModel.addVideoLike()) {
-                                            liked = true
+                                            videoDetailViewModel.updateLikeStatus(true)
                                             context.getString(dev.aaa1115910.bv.tv.R.string.zan_success).toast(context)
                                         } else {
                                             context.getString(dev.aaa1115910.bv.tv.R.string.zan_failed).toast(context)
@@ -677,7 +672,7 @@ fun VideoInfoScreen(
                                 scope.launch {
                                     if (liked) {
                                         if (videoDetailViewModel.delVideoLike()) {
-                                            liked = false
+                                            videoDetailViewModel.updateLikeStatus(false)
                                             context.getString(dev.aaa1115910.bv.tv.R.string.cancel_zan_success).toast(context)
                                         } else {
                                             context.getString(dev.aaa1115910.bv.tv.R.string.cancel_zan_failed).toast(context)
@@ -701,7 +696,7 @@ fun VideoInfoScreen(
                             onSendVideoOneClickTripleAction = {
                                 scope.launch {
                                     if (videoDetailViewModel.sendVideoOneClickTripleAction({ data ->
-                                            liked = data.like
+                                            videoDetailViewModel.updateLikeStatus(data.like)
                                             isCoin = data.coin
                                             favorited = data.fav
                                             if (favorited) addVideoToDefaultFavoriteFolder()

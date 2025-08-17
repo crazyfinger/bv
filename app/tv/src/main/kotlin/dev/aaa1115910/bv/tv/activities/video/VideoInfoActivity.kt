@@ -1,5 +1,6 @@
 package dev.aaa1115910.bv.tv.activities.video
 
+import android.app.ComponentCaller
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -8,11 +9,15 @@ import androidx.activity.compose.setContent
 import dev.aaa1115910.bv.entity.proxy.ProxyArea
 import dev.aaa1115910.bv.tv.screens.VideoInfoScreen
 import dev.aaa1115910.bv.ui.theme.BVTheme
+import dev.aaa1115910.bv.viewmodel.video.VideoDetailViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 
 class VideoInfoActivity : ComponentActivity() {
     companion object {
+        const val KEY_IS_LIKED = "is_liked"
+        const val REQUEST_CODE_IS_LIKED = 1
         private const val MAX_VIDEO_INFO_SCREENS = 3
         // 使用WeakReference防止内存泄漏，避免持有已销毁Activity的强引用
         private val activityQueue = LinkedList<WeakReference<VideoInfoActivity>>()
@@ -30,6 +35,7 @@ class VideoInfoActivity : ComponentActivity() {
             )
         }
     }
+    private val videoDetailViewModel: VideoDetailViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +72,23 @@ class VideoInfoActivity : ComponentActivity() {
             BVTheme(
                 forceDark = true
             ) {
-                VideoInfoScreen()
+                VideoInfoScreen(videoDetailViewModel = videoDetailViewModel)
             }
         }
     }
 
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+        caller: ComponentCaller
+    ) {
+        super.onActivityResult(requestCode, resultCode, data, caller)
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_IS_LIKED) {
+            val isLiked = data?.getBooleanExtra(KEY_IS_LIKED, false) ?: false
+            videoDetailViewModel.updateLikeStatus(isLiked)
+        }
+    }
     override fun onDestroy() {
         super.onDestroy()
 
