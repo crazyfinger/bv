@@ -122,7 +122,7 @@ fun BvPlayer(
     var mDanmakuPlayer: DanmakuPlayer? by remember { mutableStateOf(null) }
 
     var showLogs by remember { mutableStateOf(false) }
-    var showBackToHistory by remember { mutableStateOf(false) }
+    var showBackToStart by remember { mutableStateOf(false) }
     var isPlaying by rememberSaveable { mutableStateOf(false) }
     var isError by remember { mutableStateOf(false) }
     var isBuffering by remember { mutableStateOf(false) }
@@ -271,10 +271,10 @@ fun BvPlayer(
         if (lastPlayed > 0 && hideBackToHistoryTimer == null) {
             logger.info { "show showBackToHistory: ${videoPlayerHistoryData.lastPlayed}" }
             scope.launch(Dispatchers.Main) {
-                showBackToHistory = true
+                showBackToStart = true
                 hideBackToHistoryTimer = countDownTimer(5000, 1000, "hideBackToHistoryTimer") {
                     scope.launch(Dispatchers.Main) {
-                        showBackToHistory = false
+                        showBackToStart = false
                         hideBackToHistoryTimer = null
                         //playerViewModel.lastPlayed = 0
                         onClearBackToHistoryData()
@@ -282,6 +282,21 @@ fun BvPlayer(
                 }
             }
         }
+    }
+
+    val seekToTime: (time: Long) -> Unit = { time ->
+        videoPlayer.seekTo(time)
+        mDanmakuPlayer?.seekTo(time)
+        // akdanmaku 会在跳转后立即播放，如果需要缓冲则会导致弹幕不同步
+        mDanmakuPlayer?.pause()
+    }
+
+    val onBackToStart: () -> Unit = {
+        seekToTime(0)
+        hideBackToHistoryTimer?.cancel()
+        hideBackToHistoryTimer = null
+        showBackToStart = false
+        onClearBackToHistoryData()
     }
 
     val videoPlayerListener = object : VideoPlayerListener {
@@ -535,7 +550,7 @@ fun BvPlayer(
             isBuffering = isBuffering,
             isError = isError,
             exception = exception,
-            showBackToHistory = showBackToHistory
+            showBackToHistory = showBackToStart
         ),
         LocalVideoPlayerDebugInfoData provides VideoPlayerDebugInfoData(
             debugInfo = videoPlayer.debugInfo
@@ -546,7 +561,14 @@ fun BvPlayer(
                 .focusRequester(focusRequester),
             videoPlayer = videoPlayer,
 
-            onPlay = { videoPlayer.start() },
+            onPlay = {
+                if (videoPlayer.currentPosition >= videoPlayer.duration) {
+                    videoPlayer.prepare()
+                    seekToTime(0)
+                } else {
+                    videoPlayer.start()
+                }
+            },
             onPause = {
                 videoPlayer.pause()
                 if (!videoPlayerConfigData.incognitoMode) sendHeartbeat()
@@ -556,23 +578,15 @@ fun BvPlayer(
                 onExit()
             },
             onGoTime = {
-                videoPlayer.seekTo(it)
-                mDanmakuPlayer?.seekTo(it)
-                // akdanmaku 会在跳转后立即播放，如果需要缓冲则会导致弹幕不同步
-                mDanmakuPlayer?.pause()
+                seekToTime(it)
             },
+            onBackToStart = onBackToStart,
             onBackToHistory = {
                 val time = videoPlayerHistoryData.lastPlayed.toLong()
                 logger.fInfo { "Back to history: ${time.formatHourMinSec()}" }
-                videoPlayer.seekTo(time)
-                mDanmakuPlayer?.seekTo(time)
-                // akdanmaku 会在跳转后立即播放，如果需要缓冲则会导致弹幕不同步
-                mDanmakuPlayer?.pause()
+                seekToTime(time)
                 //playerViewModel.lastPlayed = 0
-                onClearBackToHistoryData()
-                showBackToHistory = false
-                hideBackToHistoryTimer?.cancel()
-                hideBackToHistoryTimer = null
+                showBackToStart = true
             },
             onPlayNewVideo = {
                 if (!videoPlayerConfigData.incognitoMode) sendHeartbeat()

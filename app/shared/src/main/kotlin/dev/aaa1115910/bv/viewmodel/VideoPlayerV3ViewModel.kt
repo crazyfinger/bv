@@ -168,11 +168,10 @@ class VideoPlayerV3ViewModel(
                 logger.info { "Subtitle is enabled, next video will enable subtitle automatic" }
             }
 
-            updateSubtitle()
+            updateVideoMoreInfo()
             loadPlayUrl(avid, cid, epid ?: 0, preferApi = Prefs.apiType, proxyArea = proxyArea)
             addLogs("加载弹幕中")
             loadDanmaku(cid)
-            updateDanmakuMask()
 
             updateVideoShot()
 
@@ -468,38 +467,48 @@ class VideoPlayerV3ViewModel(
         }
     }
 
-    private suspend fun updateSubtitle() {
-        currentSubtitleId = -1
-        currentSubtitleData.clear()
-
+    private suspend fun updateVideoMoreInfo() {
         runCatching {
-            val subtitleData = videoPlayRepository.getSubtitle(
+            addLogs("请求视频更多信息")
+            val simpleVideoMoreInfo = videoPlayRepository.getVideoMoreInfo(
                 aid = currentAid,
                 cid = currentCid,
                 preferApiType = Prefs.apiType
             )
             withContext(Dispatchers.Main) {
-                availableSubtitle.clear()
-                availableSubtitle.add(
-                    Subtitle(
-                        id = -1,
-                        lang = "",
-                        langDoc = "关闭",
-                        url = "",
-                        type = SubtitleType.CC,
-                        aiType = SubtitleAiType.Normal,
-                        aiStatus = SubtitleAiStatus.None
-                    )
-                )
-                availableSubtitle.addAll(subtitleData)
-                availableSubtitle.sortBy { it.id }
+                updateSubtitle(simpleVideoMoreInfo.subtitles)
+                updateDanmakuMask(simpleVideoMoreInfo.danmakuMaskSegment)
+                simpleVideoMoreInfo.history?.let {
+                    lastPlayed = it.progress * 1000
+                    addLogs("当前进度 $lastPlayed")
+                    logger.fInfo { "current progress: ${danmakuMasks.size}" }
+                }
             }
-            addLogs("获取到 ${subtitleData.size} 条字幕: ${subtitleData.map { it.langDoc }}")
-            logger.fInfo { "Update subtitle size: ${subtitleData.size}" }
         }.onFailure {
-            addLogs("获取字幕失败：${it.localizedMessage}")
-            logger.fWarn { "Update subtitle failed: ${it.stackTraceToString()}" }
+            logger.error { "Load video more info failed: ${it.stackTraceToString()}" }
         }
+    }
+
+    private suspend fun updateSubtitle(subtitleData: List<Subtitle>) {
+        currentSubtitleId = -1
+        currentSubtitleData.clear()
+
+        availableSubtitle.clear()
+        availableSubtitle.add(
+            Subtitle(
+                id = -1,
+                lang = "",
+                langDoc = "关闭",
+                url = "",
+                type = SubtitleType.CC,
+                aiType = SubtitleAiType.Normal,
+                aiStatus = SubtitleAiStatus.None
+            )
+        )
+        availableSubtitle.addAll(subtitleData)
+        availableSubtitle.sortBy { it.id }
+        addLogs("获取到 ${subtitleData.size} 条字幕: ${subtitleData.map { it.langDoc }}")
+        logger.fInfo { "Update subtitle size: ${subtitleData.size}" }
     }
 
     private fun enableFirstSubtitle() {
@@ -632,18 +641,9 @@ class VideoPlayerV3ViewModel(
         }
     }
 
-    private suspend fun updateDanmakuMask() {
-        runCatching {
-            val masks = videoPlayRepository.getDanmakuMask(
-                aid = currentAid,
-                cid = currentCid,
-                preferApiType = Prefs.apiType
-            )
-            danmakuMasks.swapListWithMainContext(masks)
-            logger.fInfo { "Load danmaku mask size: ${danmakuMasks.size}" }
-        }.onFailure {
-            logger.fWarn { "Load danmaku mask failed: ${it.stackTraceToString()}" }
-        }
+    private suspend fun updateDanmakuMask(masks: List<DanmakuMaskSegment>) {
+        danmakuMasks.swapListWithMainContext(masks)
+        logger.fInfo { "Load danmaku mask size: ${danmakuMasks.size}" }
     }
 
     private suspend fun updateVideoShot() {

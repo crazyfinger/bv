@@ -2,6 +2,8 @@ package dev.aaa1115910.biliapi.repositories
 
 import bilibili.app.playerunite.v1.PlayerGrpcKt
 import bilibili.app.playerunite.v1.playViewUniteReq
+import bilibili.app.view.v1.ViewGrpcKt
+import bilibili.app.view.v1.viewReq
 import bilibili.community.service.dm.v1.DMGrpcKt
 import bilibili.community.service.dm.v1.dmViewReq
 import bilibili.pgc.gateway.player.v2.playViewReq
@@ -13,7 +15,9 @@ import dev.aaa1115910.biliapi.entity.danmaku.DanmakuMask
 import dev.aaa1115910.biliapi.entity.danmaku.DanmakuMaskSegment
 import dev.aaa1115910.biliapi.entity.danmaku.DanmakuMaskType
 import dev.aaa1115910.biliapi.entity.video.HeartbeatVideoType
+import dev.aaa1115910.biliapi.entity.video.SimpleVideoMoreInfo
 import dev.aaa1115910.biliapi.entity.video.Subtitle
+import dev.aaa1115910.biliapi.entity.video.VideoDetail.History
 import dev.aaa1115910.biliapi.entity.video.VideoShot
 import dev.aaa1115910.biliapi.grpc.utils.handleGrpcException
 import dev.aaa1115910.biliapi.http.BiliHttpApi
@@ -48,6 +52,10 @@ class VideoPlayRepository(
             PgcPlayURLGrpcKt.PlayURLCoroutineStub(channelRepository.proxyChannel!!)
         }.getOrNull()
 
+    private val viewStub
+        get() = runCatching {
+            ViewGrpcKt.ViewCoroutineStub(channelRepository.defaultChannel!!)
+        }.getOrNull()
 
     suspend fun getPlayData(
         aid: Long,
@@ -219,8 +227,8 @@ class VideoPlayRepository(
             ApiType.App -> {
                 val dmViewReply = runCatching {
                     danmakuStub?.dmView(dmViewReq {
-                        pid = aid.toLong()
-                        oid = cid.toLong()
+                        pid = aid
+                        oid = cid
                         type = 1
                     })
                 }.onFailure { handleGrpcException(it) }.getOrThrow()
@@ -229,6 +237,79 @@ class VideoPlayRepository(
                     ?: emptyList()
             }
         }
+    }
+
+    suspend fun getVideoMoreInfo(
+        aid: Long,
+        cid: Long,
+        preferApiType: ApiType = ApiType.Web
+    ): SimpleVideoMoreInfo {
+        val (history, maskUrl, subtitles) = when (preferApiType) {
+            ApiType.Web -> {
+                val response = BiliHttpApi.getVideoMoreInfo(
+                    avid = aid,
+                    cid = cid,
+                    sessData = authRepository.sessionData ?: ""
+                ).getResponseData()
+
+                val history = History(
+                    progress = response.lastPlayTime / 1000,
+                    lastPlayedCid = response.lastPlayCid
+                )
+                val maskUrl = response.dmMask?.maskUrl
+                val subtitles = response.subtitle?.subtitles
+                    ?.map { Subtitle.fromSubtitleItem(it) }
+                    ?: emptyList()
+                Triple(history, maskUrl, subtitles)
+            }
+
+            ApiType.App -> {
+                val dmViewReply = runCatching {
+                    danmakuStub?.dmView(dmViewReq {
+                        pid = aid
+                        oid = cid
+                        type = 1
+                    })
+                }.onFailure { handleGrpcException(it) }.getOrThrow()
+                val viewReply = runCatching {
+                    viewStub?.view(viewReq {
+                        this.aid = aid
+                    })
+                }.onFailure { handleGrpcException(it) }.getOrThrow()
+                val history = viewReply?.let {
+                    if (!viewReply.hasActivitySeason()) {
+                        History.fromHistory(viewReply.history)
+                    } else {
+                        History.fromHistory(viewReply.activitySeason.history)
+                    }
+                }
+                val maskUrl = dmViewReply?.mask?.maskUrl
+                val subtitles = dmViewReply?.subtitle?.subtitlesList
+                    ?.map { Subtitle.fromSubtitleItem(it) }
+                    ?: emptyList()
+                Triple(history, maskUrl, subtitles)
+            }
+        }
+        val danmakuMaskSegment = maskUrl?.let {
+            runCatching {
+                val maskBinary = BiliHttpApi.download(maskUrl.apply {
+                    when (preferApiType) {
+                        ApiType.Web -> replace("mobmask", "webmask")
+                        ApiType.App -> replace("webmask", "mobmask")
+                    }
+                })
+                val danmakuMaskType = when (preferApiType) {
+                    ApiType.Web -> DanmakuMaskType.WebMask
+                    ApiType.App -> DanmakuMaskType.MobMask
+                }
+                DanmakuMask.fromBinary(maskBinary, danmakuMaskType).segments
+            }.getOrNull()
+        } ?: emptyList()
+        return SimpleVideoMoreInfo(
+            history = history,
+            subtitles = subtitles,
+            danmakuMaskSegment = danmakuMaskSegment
+        )
     }
 
     suspend fun sendHeartbeat(

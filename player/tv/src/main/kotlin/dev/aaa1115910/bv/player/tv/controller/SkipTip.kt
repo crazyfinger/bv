@@ -30,7 +30,7 @@ fun BackToHistoryTip(
     SkipTip(
         modifier = modifier,
         show = show,
-        text = "上次看到 $time 点击确认键跳转"
+        text = "已为您定位至 $time， 点击确认键重头播放"
     )
 }
 

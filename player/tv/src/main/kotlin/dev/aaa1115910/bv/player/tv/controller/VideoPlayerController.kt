@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -61,6 +62,7 @@ fun VideoPlayerController(
     onPause: () -> Unit,
     onExit: () -> Unit,
     onGoTime: (time: Long) -> Unit,
+    onBackToStart: () -> Unit,
     onBackToHistory: () -> Unit,
     onPlayNewVideo: (VideoListItem) -> Unit,
 
@@ -113,6 +115,12 @@ fun VideoPlayerController(
     var seekChangeCount by remember { mutableIntStateOf(0) }
     var lastSeekChangeTime by remember { mutableLongStateOf(0L) }
     var moveState by remember { mutableStateOf(SeekMoveState.Idle) }
+
+    LaunchedEffect(videoPlayerStateData.showBackToHistory) {
+        if (videoPlayerStateData.showBackToHistory) {
+            onBackToHistory()
+        }
+    }
 
     val calCoefficient = {
         if (System.currentTimeMillis() - lastSeekChangeTime < 200) {
@@ -222,7 +230,7 @@ fun VideoPlayerController(
                         @Suppress("KotlinConstantConditions")
                         if (!showClickableControllers && videoPlayerStateData.showBackToHistory) {
                             if (it.type == KeyEventType.KeyDown) return@onPreviewKeyEvent true
-                            onBackToHistory()
+                            onBackToStart()
                             return@onPreviewKeyEvent true
                         }
 

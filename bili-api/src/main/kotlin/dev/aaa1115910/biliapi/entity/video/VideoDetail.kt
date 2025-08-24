@@ -3,6 +3,7 @@ package dev.aaa1115910.biliapi.entity.video
 import bilibili.app.view.v1.ReqUser
 import bilibili.app.view.v1.ViewReply
 import bilibili.app.view.v1.ugcSeasonOrNull
+import dev.aaa1115910.biliapi.entity.danmaku.DanmakuMaskSegment
 import dev.aaa1115910.biliapi.entity.user.Author
 import dev.aaa1115910.biliapi.entity.video.season.UgcSeason
 import dev.aaa1115910.biliapi.http.entity.video.VideoStat
@@ -208,3 +209,9 @@ data class UserActions(
         }
     }
 }
+
+data class SimpleVideoMoreInfo(
+    var history: VideoDetail.History?,
+    var subtitles: List<Subtitle>,
+    var danmakuMaskSegment: List<DanmakuMaskSegment>,
+)
