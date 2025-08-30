@@ -337,7 +337,8 @@ fun VideoPlayerV3Screen(
                             context = context,
                             aid = playerViewModel.currentAid,
                             fromSeason = playerViewModel.fromSeason,
-                            proxyArea = playerViewModel.proxyArea
+                            proxyArea = playerViewModel.proxyArea,
+                            forceShowUGCInfo = true
                         )
                     }
                 },

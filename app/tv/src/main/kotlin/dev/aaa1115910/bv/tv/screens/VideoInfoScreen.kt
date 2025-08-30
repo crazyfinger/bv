@@ -185,7 +185,12 @@ fun VideoInfoScreen(
     var lastPlayedTime by remember { mutableIntStateOf(0) }
 
     var tip by remember { mutableStateOf("Loading") }
-    var showUGCVideoInfo by remember { mutableStateOf(Prefs.showUGCVideoInfo) }
+    val forceShowUGCInfo = intent.getBooleanExtra(VideoInfoActivity.KEY_FORCE_SHOW_UGC_INFO, false)
+    val showUGCVideoInfo by remember {
+        mutableStateOf(
+            Prefs.showUGCVideoInfo || forceShowUGCInfo
+        )
+    }
     var fromSeason by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
     var proxyArea by remember { mutableStateOf(ProxyArea.MainLand) }
@@ -569,6 +574,10 @@ fun VideoInfoScreen(
                             onClickCover = {
                                 logger.fInfo { "Click video cover" }
 
+                                if (forceShowUGCInfo) {
+                                    context.finish()
+                                    return@VideoInfoData
+                                }
                                 //set video list
                                 if (videoDetailViewModel.videoDetail?.ugcSeason != null) {
                                     // 合集
@@ -732,6 +741,10 @@ fun VideoInfoScreen(
                                     (videoDetailViewModel.videoDetail?.pages?.size ?: 0) > 5,
                                 onClick = { cid ->
                                     logger.fInfo { "Click video part: [av:${videoDetailViewModel.videoDetail?.aid}, bv:${videoDetailViewModel.videoDetail?.bvid}, cid:$cid]" }
+                                    if (forceShowUGCInfo) {
+                                        context.finish()
+                                        return@VideoPartRow
+                                    }
                                     launchPlayerActivity(
                                         context = context,
                                         avid = videoDetailViewModel.videoDetail!!.aid,
@@ -761,6 +774,10 @@ fun VideoInfoScreen(
                                 enableUgcListDialog = section.episodes.size > 5,
                                 onClickEp = { aid, cid ->
                                     logger.fInfo { "Click ugc season episode: [av:${videoDetailViewModel.videoDetail?.aid}, bv:${videoDetailViewModel.videoDetail?.bvid}, cid:$cid]" }
+                                    if (videoDetailViewModel.videoDetail?.aid == aid && forceShowUGCInfo) {
+                                        context.finish()
+                                        return@VideoUgcSeasonRow
+                                    }
                                     updateUgcSeasonSectionVideoList(index)
                                     launchPlayerActivity(
                                         context = context,
@@ -1894,7 +1911,7 @@ private fun CoverPreview() {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(start=16.dp, end=16.dp, bottom = 12.dp),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ){

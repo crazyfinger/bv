@@ -17,6 +17,7 @@ import java.util.LinkedList
 class VideoInfoActivity : ComponentActivity() {
     companion object {
         const val KEY_IS_LIKED = "is_liked"
+        const val KEY_FORCE_SHOW_UGC_INFO = "force_show_ugc_info"
         const val REQUEST_CODE_IS_LIKED = 1
         private const val MAX_VIDEO_INFO_SCREENS = 3
         // 使用WeakReference防止内存泄漏，避免持有已销毁Activity的强引用
@@ -24,13 +25,15 @@ class VideoInfoActivity : ComponentActivity() {
         fun actionStart(
             context: Context, aid: Long,
             fromSeason: Boolean = false,
-            proxyArea: ProxyArea = ProxyArea.MainLand
+            proxyArea: ProxyArea = ProxyArea.MainLand,
+            forceShowUGCInfo: Boolean = false,
         ) {
             context.startActivity(
                 Intent(context, VideoInfoActivity::class.java).apply {
                     putExtra("aid", aid)
                     putExtra("fromSeason", fromSeason)
                     putExtra("proxy_area", proxyArea.ordinal)
+                    putExtra(KEY_FORCE_SHOW_UGC_INFO, forceShowUGCInfo)
                 }
             )
         }
