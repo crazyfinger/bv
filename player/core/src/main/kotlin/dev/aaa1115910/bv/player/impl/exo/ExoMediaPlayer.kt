@@ -34,12 +34,13 @@ class ExoMediaPlayer(
     protected var mMediaSource: MediaSource? = null
 
     private val cacheDataSourceFactory: CacheDataSource.Factory
+    private val dataSourceFactory: OkHttpDataSource.Factory =
+        OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
+            options.userAgent?.let { setUserAgent(it) }
+            options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
+        }
+
     init {
-        val dataSourceFactory =
-            OkHttpDataSource.Factory(OkHttpUtil.generateCustomSslOkHttpClient(context)).apply {
-                options.userAgent?.let { setUserAgent(it) }
-                options.referer?.let { setDefaultRequestProperties(mapOf("referer" to it)) }
-            }
         cacheDataSourceFactory = CacheDataSource.Factory()
             .setCache(CacheManager.getCache(context))
             .setUpstreamDataSourceFactory(dataSourceFactory)
@@ -98,11 +99,11 @@ class ExoMediaPlayer(
     @OptIn(UnstableApi::class)
     override fun playUrl(videoUrl: String?, audioUrl: String?) {
         val videoMediaSource = videoUrl?.let {
-            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+            ProgressiveMediaSource.Factory(dataSourceFactory)
                 .createMediaSource(MediaItem.fromUri(it))
         }
         val audioMediaSource = audioUrl?.let {
-            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+            ProgressiveMediaSource.Factory(dataSourceFactory)
                 .createMediaSource(MediaItem.fromUri(it))
         }
 
