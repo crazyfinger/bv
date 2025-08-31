@@ -64,8 +64,6 @@ import dev.aaa1115910.bv.player.impl.exo.ExoMediaPlayer
 import dev.aaa1115910.bv.player.tv.controller.VideoPlayerController
 import dev.aaa1115910.bv.player.util.danmakuMask
 import dev.aaa1115910.bv.util.countDownTimer
-import dev.aaa1115910.bv.util.fInfo
-import dev.aaa1115910.bv.util.formatHourMinSec
 import dev.aaa1115910.bv.util.ifElse
 import dev.aaa1115910.bv.util.timeTask
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -581,13 +579,13 @@ fun BvPlayer(
                 seekToTime(it)
             },
             onBackToStart = onBackToStart,
-            onBackToHistory = {
-                val time = videoPlayerHistoryData.lastPlayed.toLong()
-                logger.fInfo { "Back to history: ${time.formatHourMinSec()}" }
-                seekToTime(time)
-                //playerViewModel.lastPlayed = 0
-                showBackToStart = true
-            },
+//            onBackToHistory = {
+//                val time = videoPlayerHistoryData.lastPlayed.toLong()
+//                logger.fInfo { "Back to history: ${time.formatHourMinSec()}" }
+//                seekToTime(time)
+//                //playerViewModel.lastPlayed = 0
+//                showBackToStart = true
+//            },
             onPlayNewVideo = {
                 if (!videoPlayerConfigData.incognitoMode) sendHeartbeat()
                 //playerViewModel.partTitle = it.title

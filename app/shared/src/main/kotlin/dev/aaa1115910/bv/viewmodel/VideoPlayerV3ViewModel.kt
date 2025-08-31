@@ -434,6 +434,12 @@ class VideoPlayerV3ViewModel(
             logger.info { "Audio url: $audioUrl" }
             videoPlayer!!.playUrl(videoUrl, audioUrl)
             videoPlayer!!.prepare()
+            if (lastPlayed > 0) {
+                val time = lastPlayed.toLong()
+                videoPlayer?.seekTo(time)
+                danmakuPlayer?.seekTo(time)
+                danmakuPlayer?.pause()
+            }
             showBuffering = true
         }
     }
@@ -458,6 +464,13 @@ class VideoPlayerV3ViewModel(
             }
             danmakuData.swapListWithMainContext(danmakuItemDataList)
             danmakuPlayer?.updateData(danmakuData)
+            if (lastPlayed > 0) {
+                val time = lastPlayed.toLong()
+                danmakuPlayer?.seekTo(time)
+                if (videoPlayer?.isPlaying != true) {
+                    danmakuPlayer?.pause()
+                }
+            }
         }.onFailure {
             addLogs("加载弹幕失败：${it.localizedMessage}")
             logger.fWarn { "Load danmaku filed: ${it.stackTraceToString()}" }
